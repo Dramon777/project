@@ -1,16 +1,10 @@
-from random import randint
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QLineEdit, QLabel, QVBoxLayout, QApplication, QWidget, QDesktopWidget, QLabel
-from PyQt5.QtGui import *
-from PyQt5.QtCore import QSize
-import sys
-import webbrowser
-import ctypes
-import win32gui
-import win32con
 import codecs
-from ctypes.wintypes import HWND
-from PyQt5.QtGui import QPainter
+import sys
+from random import randint
+
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel
 
 my_sys_lang = 'Eng'
 game_mod = None
@@ -64,14 +58,6 @@ def updater(self):
 def switch_lang(language):
     global my_sys_lang
     my_sys_lang = language
-
-
-# функция скрытия окна
-
-def hide_window(window):
-    hwnd = win32gui.GetForegroundWindow()  # Получаем дескриптор текущего окна
-    win32gui.ShowWindow(hwnd, win32con.SW_HIDE, window)  # Скрываем окно
-
 
 # функция центрирования окна
 
