@@ -97,6 +97,15 @@ def set_args(self, w, h):
                         QtCore.Qt.WindowStaysOnTopHint)
     self.setFixedSize(w, h)
     centering(self)
+    QtWidgets.QApplication.setStyle("Fusion")
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(240, 240, 255))
+    palette.setColor(QPalette.WindowText, QColor(50, 50, 50))
+    palette.setColor(QPalette.Button, QColor(180, 200, 255))
+    palette.setColor(QPalette.ButtonText, QColor(0, 0, 0))
+    palette.setColor(QPalette.Base, QColor(230, 230, 255))
+    palette.setColor(QPalette.AlternateBase, QColor(255, 250, 250))
+    QtWidgets.QApplication.setPalette(palette)
 
 
 # функция отображения окна ошибка в связи с невыбранностью режима игры
@@ -121,6 +130,29 @@ def error_of_dice_color(self1):
     self1.hide()
     wnd_error.show()
 
+def button_style():
+    """Стиль для кнопок."""
+    return """
+    QPushButton {
+        background-color: qlineargradient(
+            spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 rgba(135, 206, 250, 255),
+            stop:1 rgba(0, 191, 255, 255));
+        color: black;
+        border: 2px solid #87CEFA;
+        border-radius: 10px;
+        font: bold 14px "Arial";
+    }
+    QPushButton:hover {
+        background-color: qlineargradient(
+            spread:pad, x1:0, y1:0, x2:1, y2:0,
+            stop:0 rgba(173, 216, 230, 255),
+            stop:1 rgba(135, 206, 250, 255));
+    }
+    QPushButton:pressed {
+        background-color: rgba(70, 130, 180, 255);
+    }
+    """
 
 # окно ошибки
 
@@ -135,7 +167,6 @@ class Error(QtWidgets.QWidget):
     def setupUI(self):
         set_args(self, 400, 110)
         self.setObjectName("error")
-        self.setStyleSheet("background-color: #f8f8d9;")
         self.lbl = QLabel(self)
 
         # вывод ошибки
@@ -178,8 +209,8 @@ class Chip(QtWidgets.QPushButton):
                             QtCore.Qt.WindowStaysOnTopHint)
         self.setFixedSize(50, 50)
         self.setIconSize(QtCore.QSize(100, 100))
-        self.setStyleSheet('background-color: rgba(255, 0, 0, 255);')
-        self.setIcon(QIcon('red_chip.png' if self.color == 'red' else 'white_chip.png'))
+        self.setStyleSheet('background-color: rgba(255, 255, 255, 0);')
+        self.setIcon(QIcon('red_chip.png' if self.color == 'r' else 'white_chip.png'))
 
 
 # окно игры
@@ -200,11 +231,11 @@ class Game(QtWidgets.QWidget):
         self.second_dice = 0
         self.txt_lbl = None
         self.chip = None
+        self.lay = None
         self.setupUI()
 
     def setupUI(self):
         set_args(self, 1700, 873)
-        self.setStyleSheet("background-color: #f8dbaf;")
 
         # игровое поле
 
@@ -212,6 +243,8 @@ class Game(QtWidgets.QWidget):
         self.bg_pixmap = QPixmap("Game_desk.png")
         self.bg_lbl.setPixmap(self.bg_pixmap)
         self.bg_lbl.move(0, 0)
+        self.lay = QtWidgets.QStackedLayout()
+        self.lay.addWidget(self.bg_lbl)
 
         if my_sys_lang == 'Рус':
             # кнопка броска кубиков
@@ -244,7 +277,8 @@ class Game(QtWidgets.QWidget):
         self.chip = Chip('r')
         self.chip.move(1000, 800)
         self.chip.show()
-        self.chip.raise_() #опробуй это
+        self.lay.addWidget(self.chip)
+        # self.chip.raise_() #опробуй это
 
     # функция выхода в меню
 
@@ -311,7 +345,6 @@ class ChooseDiceColor(QtWidgets.QWidget):
     def setupUI(self):
         self.setObjectName("choosing_dice_color")
         set_args(self, 315, 250)
-        self.setStyleSheet("background-color: #f8f8d9;")
         self.lbl = QLabel(self)
 
         if my_sys_lang == 'Eng':
@@ -427,7 +460,6 @@ class ChooseGameMode(QtWidgets.QWidget):
     def setupUI(self):
         self.setObjectName("choosing_game_mod")
         set_args(self, 290, 150)
-        self.setStyleSheet("background-color: #f8f8d9;")
         self.lbl = QLabel(self)
 
         if my_sys_lang == 'Eng':
@@ -594,7 +626,6 @@ class Rules(QtWidgets.QWidget):
     def setupUI(self):
         global text_rules
         set_args(self, 800, 600)
-        self.setStyleSheet("background-color: #FFEFC1;")
 
         # язык кнопки + язык правил игры
 
@@ -618,14 +649,21 @@ class Rules(QtWidgets.QWidget):
         # кнопка возврата в главное меню
 
         self.but_back.setGeometry(QtCore.QRect(5, 505, 790, 40))
-        self.but_back.setStyleSheet("background-color: #FFEAAC;"
-                                    "font-size: 18px;")
+        self.but_back.setStyleSheet(
+            """
+            "background-color: rgb(240, 240, 255)"
+            """
+        )
         self.but_back.clicked.connect(self.back)
 
         # скроллбар + скролл колесом мыши
 
         scroll_area = QtWidgets.QScrollArea()
-        scroll_area.setStyleSheet("background-color: #FFEAAC;")
+        scroll_area.setStyleSheet(
+            """
+            QScrollBar{ background-color: rgb(240, 240, 255) } 
+            """
+        )
         scroll_area.setObjectName("scrollArea")
         scroll_area.setGeometry(QtCore.QRect(0, 0, 800, 400))
         scroll_area.setWidgetResizable(True)
@@ -669,9 +707,8 @@ class Menu(QtWidgets.QWidget):
         self.setupUi()
 
     def setupUi(self):
-        self.setObjectName("menu")
         set_args(self, 500, 550)
-        self.setStyleSheet("background-color: #f8f8d9;")
+        self.setObjectName("menu")
         self.lbl1 = QLabel(self)
         self.lbl2 = QLabel(self)
 
