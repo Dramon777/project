@@ -4,7 +4,7 @@ from random import randint
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel
+from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QRadioButton
 
 my_sys_lang = 'Eng'
 game_mod = None
@@ -59,6 +59,7 @@ def switch_lang(language):
     global my_sys_lang
     my_sys_lang = language
 
+
 # функция центрирования окна
 
 def centering(self):
@@ -66,20 +67,6 @@ def centering(self):
     cp = QDesktopWidget().availableGeometry().center()
     qr.moveCenter(cp)
     self.move(qr.topLeft())
-
-
-# функция выбора режима игры 1 на 1
-
-def one_vs_one():
-    global game_mod
-    game_mod = '1vs1'
-
-
-# функция выбора режима игры игрока против бота
-
-def vsBot():
-    global game_mod
-    game_mod = 'bot'
 
 
 # функция установки белого цвета у кубиков
@@ -293,7 +280,7 @@ class ChooseDiceColor(QtWidgets.QWidget):
 
     def setupUI(self):
         self.setObjectName("choosing_dice_color")
-        set_args(self, 290, 220)
+        set_args(self, 315, 250)
         self.setStyleSheet("background-color: #f8f8d9;")
         self.lbl = QLabel(self)
 
@@ -304,13 +291,13 @@ class ChooseDiceColor(QtWidgets.QWidget):
             self.lbl.move(70, 5)
 
             # кнопка выбрать белые кубики
-            self.white = QtWidgets.QPushButton("White", self)
+            self.white = QtWidgets.QRadioButton("White", self)
 
             # кнопка выбрать чёрные кубики
-            self.black = QtWidgets.QPushButton("Black", self)
+            self.black = QtWidgets.QRadioButton("Black", self)
 
             # кнопка выбрать оба цвета для кубиков(1 белый, 1 черный)
-            self.both = QtWidgets.QPushButton("1 Black and 1 White", self)
+            self.both = QtWidgets.QRadioButton("1 Black and 1 White", self)
 
             # кнопка возврата в меню
             self.back_menu = QtWidgets.QPushButton("Back to menu", self)
@@ -322,13 +309,13 @@ class ChooseDiceColor(QtWidgets.QWidget):
             self.lbl.move(40, 5)
 
             # кнопка выбрать белые кубики
-            self.white = QtWidgets.QPushButton("Белые", self)
+            self.white = QtWidgets.QRadioButton("Белые", self)
 
             # кнопка выбрать чёрные кубики
-            self.black = QtWidgets.QPushButton("Чёрные", self)
+            self.black = QtWidgets.QRadioButton("Чёрные", self)
 
             # кнопка выбрать оба цвета для кубиков(1 белый, 1 черный)
-            self.both = QtWidgets.QPushButton("1 Белый и 1 Чёрный", self)
+            self.both = QtWidgets.QRadioButton("1 Белый и 1 Чёрный", self)
 
             # кнопка возврата в меню
             self.back_menu = QtWidgets.QPushButton("Вернуться в меню", self)
@@ -337,28 +324,28 @@ class ChooseDiceColor(QtWidgets.QWidget):
 
         # настройка кнопки выбора белого цвета
         self.white.setStyleSheet("font-size: 18px;")
-        self.white.setGeometry(QtCore.QRect(5, 45, 120, 45))
+        self.white.setGeometry(QtCore.QRect(15, 45, 120, 45))
         self.white.clicked.connect(chose_color_white)
 
         # настройка кнопки выбора чёрного цвета
         self.black.setStyleSheet("font-size: 18px;")
-        self.black.setGeometry(QtCore.QRect(165, 45, 120, 45))
+        self.black.setGeometry(QtCore.QRect(15, 90, 120, 45))
         self.black.clicked.connect(chose_color_black)
 
         # настройка кнопки выбора обоих цветов
         self.both.setStyleSheet("font-size: 18px;")
-        self.both.setGeometry(QtCore.QRect(5, 100, 280, 45))
+        self.both.setGeometry(QtCore.QRect(15, 135, 280, 45))
         self.both.clicked.connect(chose_color_both)
 
         # настройка кнопки возврата в меню
         self.back_menu.setStyleSheet("font-size: 18px;")
-        self.back_menu.setGeometry(QtCore.QRect(120, 165, 160, 45))
+        self.back_menu.setGeometry(QtCore.QRect(130, 190, 160, 45))
         self.back_menu.clicked.connect(self.back_to_main_menu)
 
         # настройка кнопки ОК
         self.ok = QtWidgets.QPushButton("ОК", self)
         self.ok.setStyleSheet("font-size: 18px;")
-        self.ok.setGeometry(QtCore.QRect(5, 165, 100, 45))
+        self.ok.setGeometry(QtCore.QRect(15, 190, 100, 45))
         self.ok.clicked.connect(self.oked)
 
     # функция возврата в меню
@@ -378,6 +365,22 @@ class ChooseDiceColor(QtWidgets.QWidget):
             error_of_dice_color(self)
 
 
+# функция выбора режима игры игрока против бота
+
+def vsBot():
+    global game_mod
+    game_mod = 'bot'
+    print(game_mod)
+
+
+# функция выбора режима игры 1 на 1
+
+def one_vs_one():
+    global game_mod
+    game_mod = '1vs1'
+    print(game_mod)
+
+
 # окно выбора режима
 
 class ChooseGameMode(QtWidgets.QWidget):
@@ -393,7 +396,7 @@ class ChooseGameMode(QtWidgets.QWidget):
 
     def setupUI(self):
         self.setObjectName("choosing_game_mod")
-        set_args(self, 290, 200)
+        set_args(self, 290, 150)
         self.setStyleSheet("background-color: #f8f8d9;")
         self.lbl = QLabel(self)
 
@@ -404,17 +407,16 @@ class ChooseGameMode(QtWidgets.QWidget):
             self.lbl.move(60, 5)
 
             # кнопка Играть 1 на 1
-            self.game_mod_1vs1 = QtWidgets.QPushButton("Person", self)
+            self.game_mod_1vs1 = QtWidgets.QRadioButton("Person", self)
 
             # кнопка Играть с ботом
-            self.game_mod_versus_bot = QtWidgets.QPushButton("Computer", self)
+            self.game_mod_versus_bot = QtWidgets.QRadioButton("Computer", self)
 
             # кнопка Играть
             self.play = QtWidgets.QPushButton("Play", self)
 
             # кнопка возврата в меню
             self.ret = QtWidgets.QPushButton("Back", self)
-
 
         else:
 
@@ -423,10 +425,10 @@ class ChooseGameMode(QtWidgets.QWidget):
             self.lbl.move(8, 5)
 
             # кнопка Играть 1 на 1
-            self.game_mod_1vs1 = QtWidgets.QPushButton("Человек", self)
+            self.game_mod_1vs1 = QtWidgets.QRadioButton("Человек", self)
 
             # кнопка Играть с ботом
-            self.game_mod_versus_bot = QtWidgets.QPushButton("Компьютер", self)
+            self.game_mod_versus_bot = QtWidgets.QRadioButton("Компьютер", self)
 
             # кнопка Играть
             self.play = QtWidgets.QPushButton("Играть", self)
@@ -447,12 +449,12 @@ class ChooseGameMode(QtWidgets.QWidget):
         self.game_mod_versus_bot.clicked.connect(vsBot)
 
         self.play.setStyleSheet("font-size: 18px;")
-        self.play.setGeometry(QtCore.QRect(95, 90, 100, 45))
+        self.play.setGeometry(QtCore.QRect(25, 90, 100, 45))
         self.play.setObjectName("game_mod_you_vs_bot")
         self.play.clicked.connect(self.playing)
 
         self.ret.setStyleSheet("font-size: 18px;")
-        self.ret.setGeometry(QtCore.QRect(95, 150, 100, 45))
+        self.ret.setGeometry(QtCore.QRect(155, 90, 100, 45))
         self.ret.setObjectName("return to main menu")
 
         self.ret.clicked.connect(self.back)
@@ -738,4 +740,3 @@ if __name__ == '__main__':
     wnd_menu = Menu()
     wnd_menu.show()
     sys.exit(app.exec())
-
