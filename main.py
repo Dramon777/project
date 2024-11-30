@@ -162,6 +162,26 @@ class Error(QtWidgets.QWidget):
         self.close()
 
 
+# v = [[chip1, chip3, chip6], [], ]
+# n = []
+
+# объект фишка
+
+class Chip(QtWidgets.QPushButton):
+    def __init__(self, color):
+        super().__init__()
+        self.color = color
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint |
+                            QtCore.Qt.WindowStaysOnTopHint)
+        self.setFixedSize(50, 50)
+        self.setIconSize(QtCore.QSize(100, 100))
+        self.setStyleSheet('background-color: rgba(255, 0, 0, 255);')
+        self.setIcon(QIcon('red_chip.png' if self.color == 'red' else 'white_chip.png'))
+
+
 # окно игры
 
 class Game(QtWidgets.QWidget):
@@ -179,6 +199,7 @@ class Game(QtWidgets.QWidget):
         self.first_dice = 0
         self.second_dice = 0
         self.txt_lbl = None
+        self.chip = None
         self.setupUI()
 
     def setupUI(self):
@@ -219,6 +240,12 @@ class Game(QtWidgets.QWidget):
 
         self.button_throw_dice.clicked.connect(self.throwed)
 
+        # тестовая фишка
+        self.chip = Chip('r')
+        self.chip.move(1000, 800)
+        self.chip.show()
+        self.chip.raise_() #опробуй это
+
     # функция выхода в меню
 
     def back(self):
@@ -228,6 +255,9 @@ class Game(QtWidgets.QWidget):
     # функция броска кубиков
 
     def throwed(self):
+        self.chip.show()
+        self.chip.move(100, 150)
+        self.chip.show()
 
         # бросок кубиков + защита от спама кнопки
 
