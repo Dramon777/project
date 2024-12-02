@@ -1,5 +1,6 @@
 import codecs
 import sys
+import this
 from random import randint
 
 from PyQt5 import QtCore, QtWidgets
@@ -196,23 +197,6 @@ class Error(QtWidgets.QWidget):
 # v = [[chip1, chip3, chip6], [], ]
 # n = []
 
-# объект фишка
-
-class Chip(QtWidgets.QPushButton):
-    def __init__(self, color):
-        super().__init__()
-        self.color = color
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint |
-                            QtCore.Qt.WindowStaysOnTopHint)
-        self.setFixedSize(50, 50)
-        self.setIconSize(QtCore.QSize(100, 100))
-        self.setStyleSheet('background-color: rgba(255, 255, 255, 0);')
-        self.setIcon(QIcon('red_chip.png' if self.color == 'r' else 'white_chip.png'))
-
-
 # окно игры
 
 class Game(QtWidgets.QWidget):
@@ -221,17 +205,26 @@ class Game(QtWidgets.QWidget):
         self.bg_lbl = None
         self.bg_pixmap = None
         self.button_back = None
+        self.button_throw_dice = None
+        self.wnd_of_exit = None
+
+        # обязательные 2 кубика
         self.lbl_dice1 = None
         self.pixmap_dice1 = None
         self.lbl_dice2 = None
         self.pixmap_dice2 = None
-        self.button_throw_dice = None
-        self.wnd_of_exit = None
+
+        # необязательные 2 кубика
+        self.lbl_dice3 = None
+        self.pixmap_dice3 = None
+        self.lbl_dice4 = None
+        self.pixmap_dice4 = None
+
         self.first_dice = 0
         self.second_dice = 0
         self.txt_lbl = None
         self.chip = None
-        self.lay = None
+        self.is_same = False
         self.setupUI()
 
     def setupUI(self):
@@ -243,8 +236,6 @@ class Game(QtWidgets.QWidget):
         self.bg_pixmap = QPixmap("Game_desk.png")
         self.bg_lbl.setPixmap(self.bg_pixmap)
         self.bg_lbl.move(0, 0)
-        self.lay = QtWidgets.QStackedLayout()
-        self.lay.addWidget(self.bg_lbl)
 
         if my_sys_lang == 'Рус':
             # кнопка броска кубиков
@@ -274,11 +265,10 @@ class Game(QtWidgets.QWidget):
         self.button_throw_dice.clicked.connect(self.throwed)
 
         # тестовая фишка
-        self.chip = Chip('r')
+        self.chip = self.create_chip('r')
         self.chip.move(1000, 800)
+        self.chip.clicked.connect(self.tester())
         self.chip.show()
-        self.lay.addWidget(self.chip)
-        # self.chip.raise_() #опробуй это
 
     # функция выхода в меню
 
@@ -289,15 +279,23 @@ class Game(QtWidgets.QWidget):
     # функция броска кубиков
 
     def throwed(self):
-        self.chip.show()
-        self.chip.move(100, 150)
-        self.chip.show()
+
+        if not self.lbl_dice1 is None:
+            self.lbl_dice1.clear()
+        if not self.lbl_dice2 is None:
+            self.lbl_dice2.clear()
+        if not self.lbl_dice3 is None:
+            self.lbl_dice3.clear()
+        if not self.lbl_dice4 is None:
+            self.lbl_dice4.clear()
+        if not self.txt_lbl is None:
+            self.txt_lbl.clear()
 
         # бросок кубиков + защита от спама кнопки
 
         self.first_dice = randint(1, 6)
         self.second_dice = randint(1, 6)
-        self.button_throw_dice.setEnabled(False)
+        # self.button_throw_dice.setEnabled(False)
         print(self.first_dice, self.second_dice)
 
         # отображение кубиков на панели справа
@@ -306,19 +304,52 @@ class Game(QtWidgets.QWidget):
         self.lbl_dice1 = QLabel(self)
         self.lbl_dice2 = QLabel(self)
         self.txt_lbl = QLabel(self)
-        if dice_color != 'both':
-            self.pixmap_dice1 = QPixmap(dices_colors[dice_color][self.first_dice])
-            self.pixmap_dice2 = QPixmap(dices_colors[dice_color][self.second_dice])
+
+        # настройка первого кубика
+
+        self.pixmap_dice1 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
+
+        # настройка второго кубика
+
+        self.pixmap_dice2 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice])
+
+        if self.first_dice == self.second_dice:
+            self.lbl_dice3 = QLabel(self)
+            self.lbl_dice4 = QLabel(self)
+
+            self.pixmap_dice3 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
+            self.pixmap_dice3 = self.pixmap_dice3.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
+            self.lbl_dice3.setPixmap(self.pixmap_dice3)
+            self.lbl_dice3.move(1450, 155)
+
+            self.pixmap_dice4 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice])
+            self.pixmap_dice4 = self.pixmap_dice4.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
+            self.lbl_dice4.setPixmap(self.pixmap_dice4)
+            self.lbl_dice4.move(1580, 155)
+
+            # доп настройка ПЕРВОГО кубика, если выпало одинковое число
+
+            self.pixmap_dice1 = self.pixmap_dice1.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
+            self.lbl_dice1.setPixmap(self.pixmap_dice1)
+            self.lbl_dice1.move(1450, 20)
+
+            # доп настройка ВТОРОГО кубика, если выпало одинковое число
+
+            self.pixmap_dice2 = self.pixmap_dice2.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
+            self.lbl_dice2.setPixmap(self.pixmap_dice2)
+            self.lbl_dice2.move(1580, 20)
+
+            self.lbl_dice3.show()
+            self.lbl_dice4.show()
+
         else:
-            self.pixmap_dice1 = QPixmap(dices_colors['white'][self.first_dice])
-            self.pixmap_dice2 = QPixmap(dices_colors['black'][self.second_dice])
-        self.lbl_dice1.setPixmap(self.pixmap_dice1)
-        self.lbl_dice2.setPixmap(self.pixmap_dice2)
-        self.lbl_dice1.move(1470, 5)
-        self.lbl_dice2.move(1470, 230)
+            self.lbl_dice1.setPixmap(self.pixmap_dice1)
+            self.lbl_dice2.setPixmap(self.pixmap_dice2)
+            self.lbl_dice1.move(1470, 5)
+            self.lbl_dice2.move(1470, 230)
+
         self.lbl_dice1.show()
         self.lbl_dice2.show()
-
         # настройка и отображение суммы значений выпавших кубиков
         if my_sys_lang == 'Eng':
             self.txt_lbl.setText(f'Sum = {self.first_dice + self.second_dice}')
@@ -328,6 +359,20 @@ class Game(QtWidgets.QWidget):
         self.txt_lbl.setStyleSheet("font-size: 20px;")
         self.txt_lbl.show()
 
+    # функция создания фишки
+
+    def create_chip(self, c):
+        but = QtWidgets.QPushButton(self)
+        pix = QPixmap('red_chip.png' if c == 'r' else 'white_chip.png')
+        but.setIcon(QIcon(pix))
+        but.setIconSize(pix.size())
+        but.setFixedSize(pix.size())
+        but.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
+
+        return but
+
+    def tester(self):
+        print('test_is_good')
 
 # окно выбора цвета кубиков
 
