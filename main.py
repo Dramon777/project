@@ -223,13 +223,13 @@ class Game(QtWidgets.QWidget):
         self.first_dice = 0
         self.second_dice = 0
         self.txt_lbl = None
-        self.chip = None
+        self.red_chips = None
+        self.white_chips = None
         self.is_same = False
         self.setupUI()
 
     def setupUI(self):
         set_args(self, 1700, 873)
-
         # игровое поле
 
         self.bg_lbl = QLabel(self)
@@ -264,11 +264,19 @@ class Game(QtWidgets.QWidget):
 
         self.button_throw_dice.clicked.connect(self.throwed)
 
-        # тестовая фишка
-        self.chip = self.create_chip('r')
-        self.chip.move(1000, 800)
-        self.chip.clicked.connect(self.tester())
-        self.chip.show()
+        # пробное создание красных фишек
+
+        for i in range (1, 16):
+            chip = self.create_chip('r')
+            chip.move(195, 787 - (52 * i) + 52)
+            chip.clicked.connect(self.tester)
+
+        # пробное создание белых фишек
+
+        for i in range (1, 16):
+            chip = self.create_chip('w')
+            chip.move(1200, (52 * i) - 17)
+            chip.clicked.connect(self.tester)
 
     # функция выхода в меню
 
@@ -279,7 +287,6 @@ class Game(QtWidgets.QWidget):
     # функция броска кубиков
 
     def throwed(self):
-
         if not self.lbl_dice1 is None:
             self.lbl_dice1.clear()
         if not self.lbl_dice2 is None:
@@ -635,9 +642,11 @@ class Exit(QtWidgets.QWidget):
         self.no.setObjectName("no_exit_button")
         self.no.clicked.connect(self.back)
 
-    # функция закрытия окна и открытия меню
+    # функция закрытия окна и возвращения в предцдущее окно, из которого хотели выйти
 
     def back(self):
+        if self.par == 'menu':
+            wnd_menu.show()
         self.close()
 
     # функция выхода из программы
@@ -826,6 +835,7 @@ class Menu(QtWidgets.QWidget):
 
     def exiting(self):
         self.wnd_of_exit = Exit('menu')
+        wnd_menu.hide()
         self.wnd_of_exit.show()
 
     # измение языка игры
