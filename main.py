@@ -226,6 +226,9 @@ class Game(QtWidgets.QWidget):
         self.red_chips = None
         self.white_chips = None
         self.is_same = False
+        self.cells = None
+        self.helper = None
+        self.but_size = None
         self.setupUI()
 
     def setupUI(self):
@@ -264,19 +267,104 @@ class Game(QtWidgets.QWidget):
 
         self.button_throw_dice.clicked.connect(self.throwed)
 
+        self.but_size = QPixmap('red_chip.png').size()
+        self.cells = []
+        self.helper = [[], []]
+
         # пробное создание красных фишек
 
         for i in range (1, 16):
-            chip = self.create_chip('r')
-            chip.move(195, 787 - (52 * i) + 52)
-            chip.clicked.connect(self.tester)
 
-        # пробное создание белых фишек
+            # создание и отображение красных фишек
+            chip1 = self.create_chip('r', i)
+            chip1.move(195, 787 - (52 * i) + 52)
+            chip1.clicked.connect(self.tester)
 
-        for i in range (1, 16):
-            chip = self.create_chip('w')
-            chip.move(1200, (52 * i) - 17)
-            chip.clicked.connect(self.tester)
+            # создание и отображение белых фишек
+            chip2 = self.create_chip('w', i)
+            chip2.move(1200, (52 * i) - 17)
+            chip2.clicked.connect(self.tester)
+
+            self.helper[0].append(chip1)
+            self.helper[1].append(chip2)
+
+        # внутренняя реализация игрового поля вида:
+        # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
+        # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
+
+        self.cells.append(self.helper[0])
+        # расположения всех треугольников
+
+        # if True:
+        #
+        #     # 1
+        #     self.cells.append(self.create_chip('none', -1).move(280, 35))
+        #
+        #     # 2
+        #     self.cells.append(self.create_chip('none', -2).move(370, 35))
+        #
+        #     # 3
+        #     self.cells.append(self.create_chip('none', -3).move(455, 35))
+        #
+        #     # 4
+        #     self.cells.append(self.create_chip('none', -4).move(545, 35))
+        #
+        #     # 5
+        #     self.cells.append(self.create_chip('none', -5).move(630, 35))
+        #
+        #     # 6
+        #
+        #     self.cells.append(self.create_chip('none', -6).move(757, 35))
+        #
+        #     # 7
+        #     self.cells.append(self.create_chip('none', -7).move(847, 35))
+        #
+        #     # 8
+        #     self.cells.append(self.create_chip('none', -8).move(937, 35))
+        #
+        #     # 9
+        #     self.cells.append(self.create_chip('none', -9).move(1025, 35))
+        #
+        #     # 10
+        #     self.cells.append(self.create_chip('none', -10).move(1112, 35))
+        #
+        #     # 11
+        #     self.cells.append(self.create_chip('none', -11).move(285, 787))
+        #
+        #     # 12
+        #     self.cells.append(self.create_chip('none', -12).move(372, 787))
+        #
+        #     # 13
+        #     self.cells.append(self.create_chip('none', -13).move(460, 787))
+        #
+        #     # 14
+        #     self.cells.append(self.create_chip('none', -14).move(547, 787))
+        #
+        #     # 15
+        #     self.cells.append(self.create_chip('none', -15).move(635, 787))
+        #
+        #     # 16
+        #     self.cells.append(self.create_chip('none', -16).move(765, 787))
+        #
+        #     # 17
+        #     self.cells.append(self.create_chip('none', -17).move(855, 787))
+        #
+        #     # 18
+        #     self.cells.append(self.create_chip('none', -18).move(940, 787))
+        #
+        #     # 19
+        #     self.cells.append(self.create_chip('none', -19).move(1028, 787))
+        #
+        #     # 20
+        #     self.cells.append(self.create_chip('none', -20).move(1115, 787))
+
+        self.cells.append([] * 20)
+        self.cells.append(self.helper[1])
+
+        # отчистка вспомогательного списка
+        self.helper.clear()
+
+
 
     # функция выхода в меню
 
@@ -366,20 +454,22 @@ class Game(QtWidgets.QWidget):
         self.txt_lbl.setStyleSheet("font-size: 20px;")
         self.txt_lbl.show()
 
+
     # функция создания фишки
-
-    def create_chip(self, c):
+    def create_chip(self, c, num):
         but = QtWidgets.QPushButton(self)
-        pix = QPixmap('red_chip.png' if c == 'r' else 'white_chip.png')
-        but.setIcon(QIcon(pix))
-        but.setIconSize(pix.size())
-        but.setFixedSize(pix.size())
-        but.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
-
+        if c != 'none':
+            pix = QPixmap('red_chip.png' if c == 'r' else 'white_chip.png')
+            but.setIcon(QIcon(pix))
+            but.setIconSize(self.but_size)
+        but.setFixedSize(self.but_size)
+        but.setStyleSheet("QPushButton { background-color: transparent; border: none; }" if c != "none" else "QPushButton { background-color: red; }")
+        but.setObjectName(f'chip_{"white" if c == "w" else ("red" if c == "r" else "field")}_{str(num)}')
         return but
 
     def tester(self):
         print('test_is_good')
+
 
 # окно выбора цвета кубиков
 
