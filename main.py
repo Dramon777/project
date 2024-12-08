@@ -236,7 +236,9 @@ class Game(QtWidgets.QWidget):
         self.helper = None
         self.but_size = None
 
-        self.can_move_but = None
+        self.can_move_but1 = None
+        self.can_move_but2 = None
+        self.can_move_but3 = None
         self.num_of_last_pushed_but = ''
         self.setupUI()
 
@@ -411,93 +413,72 @@ class Game(QtWidgets.QWidget):
         return but
 
     def travel(self, but1):
-        if (self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
+        # Проверка на последнюю нажатую кнопку
+        if (self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and
+            self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
             return
-        if self.num_of_last_pushed_but != '':
-            self.can_move_but.deleteLater()
 
-        print(len(self.cells))
-        for i in self.cells:
-            if len(i) > 0:
-                print(i[0].objectName()[-2:], end=' ')
-                if i[0].objectName()[-2:] == '-1':
-                    self.can_move_but.deleteLater()
-            else:
-                print(0, end=' ')
-        print(but1.objectName())
+        if self.num_of_last_pushed_but:
+            self.can_move_but1.deleteLater()
+            self.can_move_but2.deleteLater()
+
         pos1 = self.on_desk(but1)
-        print(pos1, pos1 + self.first_dice)
-        self.can_move_but = self.create_chip('g', -1)
-        target_pos = pos1 + self.first_dice
+
+        # создание подсказки для первого кубика
+        self.can_move_but1 = self.create_chip('g', -1)
+        self.move_chip(but1, pos1, self.first_dice, self.can_move_but1)
+
+        # Создание подсказки для второго кубика
+        self.can_move_but2 = self.create_chip('g', -1)
+        self.move_chip(but1, pos1, self.second_dice, self.can_move_but2)
+
+    def move_chip(self, but1, pos1, dice, move_button):
+        target_pos = pos1 + dice
         self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
-        global triangles
-        # разбиение на 2 случая, в зависимости от цвета фишки
-        # УСЛОВИЕ ПОСТАНОВКИ ФИШЕК НУЖНО ПРОРАБОТАТЬ И ПОФИКСИТЬ БАГИ
+
+        if (target_pos > 23 and 'reddd' in but1.objectName()) or (target_pos % 24 > 11 and -1 < pos1 < 12 and 'white' in but1.objectName()):
+            return  # за пределами игрового поля
+
         if 'reddd' in but1.objectName():
-            # защита от зацикливания
-            if target_pos < 24:
-                # условие на пустоту в треугольнике
-                if len(self.cells[target_pos]) > 0:
-                    # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'reddd' in self.cells[target_pos][0].objectName():
-                        # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if target_pos < 12: # нижняя
-                            self.can_move_but.move(self.cells[target_pos][0].x(),
-                                              self.cells[target_pos][0].y() - 52)
-                        else: # верхняя
-                            self.can_move_but.move(self.cells[target_pos][0].x(),
-                                              self.cells[target_pos][0].y() + 52)
-                    else:
-                        return
-                else:
-                    # т к в треугольник мы можем пойти и он пустой
-                    x, y = triangles[target_pos][0], triangles[target_pos][1]
-                    self.can_move_but.move(x, y)
-            else:
-                return
+            player_color, enemy_color = 'reddd', 'white'
         else:
-            # защита от зацикливания
-            if (-1 < pos1 < 12 and (target_pos < 12)) or pos1 > 11:
-                # условие на пустоту в треугольнике
-                if len(self.cells[target_pos % 24]) > 0:
-                    # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'white' in self.cells[target_pos % 24][0].objectName():
-                        # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if 11 < target_pos < 24: # верхняя
-                            self.can_move_but.move(self.cells[target_pos][0].x(),
-                                              self.cells[target_pos][0].y() + 52)
-                        else: # нижняя
-                            self.can_move_but.move(self.cells[target_pos % 24][0].x(),
-                                              self.cells[target_pos % 24][0].y() - 52)
-                    else:
-                        return
-                else:
-                    # т к в треугольник мы можем пойти и он пустой
-                    x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
-                    self.can_move_but.move(x, y)
+            player_color, enemy_color = 'white', 'reddd'
+
+        # проверка условий для движения
+        if len(self.cells[target_pos % 24]) > 0:
+            if player_color in self.cells[target_pos % 24][0].objectName():
+                direction = -52 if target_pos < 12 else 52
+                move_button.move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
             else:
-                return
-        self.can_move_but.show()
-        self.can_move_but.clicked.connect(lambda: self.mover(pos1, self.first_dice))
+                return  # вражеская фишка на позиции
+        else:
+            # целевая позиция пуста
+            x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
+            move_button.move(x, y)
 
+        move_button.show()
+        move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
 
-    def mover(self, pos, dice):
+    def mover(self, pos, dice, to_pos):
         target_pos = pos + dice
         m = self.cells[pos][0]
         del self.cells[pos][0]
         self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
-        x, y = self.can_move_but.x(), self.can_move_but.y()
+        x, y = to_pos.x(), to_pos.y()
         self.cells[target_pos % 24][0].move(x, y)
-        self.can_move_but.deleteLater()
+
+        if self.can_move_but1:
+            self.can_move_but1.deleteLater()
+        if self.can_move_but2:
+            self.can_move_but2.deleteLater()
+
         self.num_of_last_pushed_but = ''
 
-    # функция проверки наличия фишки на доске, которая возвращает -1 при отсутствии фишки и позицию фишки, если она находится не доске
     def on_desk(self, but):
         for i, cell in enumerate(self.cells):
             if but in cell:
                 return i
         return -1
-
 
 # окно выбора цвета кубиков
 
