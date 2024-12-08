@@ -38,17 +38,18 @@ dices_colors = {
 # расположения всех треугольников
 
 triangles = {
-    1: [195, 787],
-    2: [285, 787],
-    3: [372, 787],
-    4: [460, 787],
-    5: [547, 787],
-    6: [635, 787],
-    7: [765, 787],
-    8: [855, 787],
-    9: [940, 787],
-    10: [1028, 787],
-    11: [1115, 787],
+    0: [195, 787],
+    1: [285, 787],
+    2: [372, 787],
+    3: [460, 787],
+    4: [547, 787],
+    5: [635, 787],
+    6: [765, 787],
+    7: [855, 787],
+    8: [940, 787],
+    9: [1028, 787],
+    10: [1115, 787],
+    11: [1200, 787],
     12: [1200, 35],
     13: [1112, 35],
     14: [1025, 35],
@@ -59,7 +60,8 @@ triangles = {
     19: [545, 35],
     20: [455, 35],
     21: [370, 35],
-    22: [280, 35]
+    22: [280, 35],
+    23: [190, 35]
 }
 
 
@@ -235,6 +237,7 @@ class Game(QtWidgets.QWidget):
         self.but_size = None
 
         self.can_move_but = None
+        self.num_of_last_pushed_but = ''
         self.setupUI()
 
     def setupUI(self):
@@ -408,9 +411,10 @@ class Game(QtWidgets.QWidget):
         return but
 
     def travel(self, but1):
-        print(self.cells)
-        if self.first_dice == 0:
+        if (self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
             return
+        if self.num_of_last_pushed_but != '':
+            self.can_move_but.deleteLater()
 
         print(len(self.cells))
         for i in self.cells:
@@ -421,33 +425,28 @@ class Game(QtWidgets.QWidget):
             else:
                 print(0, end=' ')
         print(but1.objectName())
-        pos1 = self.on_desk(but1) + 1
+        pos1 = self.on_desk(but1)
         print(pos1, pos1 + self.first_dice)
         self.can_move_but = self.create_chip('g', -1)
         target_pos = pos1 + self.first_dice
+        self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
         global triangles
         # разбиение на 2 случая, в зависимости от цвета фишки
-
-
-
         # УСЛОВИЕ ПОСТАНОВКИ ФИШЕК НУЖНО ПРОРАБОТАТЬ И ПОФИКСИТЬ БАГИ
-
-
-
         if 'reddd' in but1.objectName():
             # защита от зацикливания
-            if target_pos < 25:
+            if target_pos < 24:
                 # условие на пустоту в треугольнике
-                if len(self.cells[target_pos - 1]) > 0:
+                if len(self.cells[target_pos]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'reddd' in self.cells[target_pos - 1][0].objectName():
+                    if 'reddd' in self.cells[target_pos][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if target_pos < 13:
+                        if target_pos < 12: # нижняя
+                            self.can_move_but.move(self.cells[target_pos][0].x(),
+                                              self.cells[target_pos][0].y() - 52)
+                        else: # верхняя
                             self.can_move_but.move(self.cells[target_pos][0].x(),
                                               self.cells[target_pos][0].y() + 52)
-                        else:
-                            self.can_move_but.move(self.cells[target_pos - 1][0].x(),
-                                              self.cells[target_pos - 1][0].y() - 52)
                     else:
                         return
                 else:
@@ -458,23 +457,23 @@ class Game(QtWidgets.QWidget):
                 return
         else:
             # защита от зацикливания
-            if (0 < pos1 < 12 and (target_pos < 13)) or pos1 > 12:
+            if (-1 < pos1 < 12 and (target_pos < 12)) or pos1 > 11:
                 # условие на пустоту в треугольнике
-                if len(self.cells[target_pos % 25]) > 0:
+                if len(self.cells[target_pos % 24]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'white' in self.cells[target_pos % 25][0].objectName():
+                    if 'white' in self.cells[target_pos % 24][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if 12 < target_pos < 25:
-                            self.can_move_but.move(self.cells[target_pos].x(),
-                                              self.cells[target_pos][0].y() - 52)
-                        else:
-                            self.can_move_but.move(self.cells[target_pos].x(),
+                        if 11 < target_pos < 24: # верхняя
+                            self.can_move_but.move(self.cells[target_pos][0].x(),
                                               self.cells[target_pos][0].y() + 52)
+                        else: # нижняя
+                            self.can_move_but.move(self.cells[target_pos % 24][0].x(),
+                                              self.cells[target_pos % 24][0].y() - 52)
                     else:
                         return
                 else:
                     # т к в треугольник мы можем пойти и он пустой
-                    x, y = triangles[target_pos - 1][0], triangles[target_pos - 1][1]
+                    x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
                     self.can_move_but.move(x, y)
             else:
                 return
@@ -483,12 +482,14 @@ class Game(QtWidgets.QWidget):
 
 
     def mover(self, pos, dice):
-        m = self.cells[pos - 1][0]
-        del self.cells[pos - 1][0]
-        self.cells[pos + dice - 1] = [m] + self.cells[pos + dice - 1]
+        target_pos = pos + dice
+        m = self.cells[pos][0]
+        del self.cells[pos][0]
+        self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
         x, y = self.can_move_but.x(), self.can_move_but.y()
-        self.cells[pos + dice - 1][0].move(x, y)
+        self.cells[target_pos % 24][0].move(x, y)
         self.can_move_but.deleteLater()
+        self.num_of_last_pushed_but = ''
 
     # функция проверки наличия фишки на доске, которая возвращает -1 при отсутствии фишки и позицию фишки, если она находится не доске
     def on_desk(self, but):
