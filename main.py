@@ -277,18 +277,19 @@ class Game(QtWidgets.QWidget):
         self.cells = []
         self.helper = [[], []]
 
-        # пробное создание красных фишек
-
+        # начальная генерация фишек
         for i in range(1, 16):
+
             # создание и отображение красных фишек
             chip1 = self.create_chip('r', i)
             chip1.move(195, 787 - (52 * i) + 52)
-            chip1.clicked.connect(lambda: self.travel(chip1))
 
             # создание и отображение белых фишек
             chip2 = self.create_chip('w', i)
             chip2.move(1200, (52 * i) - 17)
-            chip2.clicked.connect(lambda: self.travel(chip2))
+
+            chip1.clicked.connect(lambda checked, chip=chip1: self.travel(chip))
+            chip2.clicked.connect(lambda checked, chip=chip2: self.travel(chip))
 
             self.helper[0].insert(0, chip1)
             self.helper[1].insert(0, chip2)
@@ -298,7 +299,6 @@ class Game(QtWidgets.QWidget):
         # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
 
         self.cells.append(self.helper[0])
-
         self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
         self.cells.append(self.helper[1])
         self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
@@ -407,55 +407,54 @@ class Game(QtWidgets.QWidget):
         but.setObjectName(f'chip_{"white" if c == "w" else ("reddd" if c == "r" else "field")}_{str(num)}')
         return but
 
-    def travel(self, but):
+    def travel(self, but1):
         print(self.cells)
         if self.first_dice == 0:
             return
-        print(1)
+
+        print(len(self.cells))
         for i in self.cells:
             if len(i) > 0:
                 print(i[0].objectName()[-2:], end=' ')
                 if i[0].objectName()[-2:] == '-1':
                     self.can_move_but.deleteLater()
-                    self.cells[self.cells.index(i)] = self.cells[self.cells.index(i)][1:]
-
             else:
                 print(0, end=' ')
-        print(2)
-        pos1 = self.on_desk(but) + 1
+        print(but1.objectName())
+        pos1 = self.on_desk(but1) + 1
         print(pos1, pos1 + self.first_dice)
         self.can_move_but = self.create_chip('g', -1)
         global triangles
         # разбиение на 2 случая, в зависимости от цвета фишки
-        if but.objectName()[5:10] == 'reddd':
+        if 'reddd' in but1.objectName():
             # защита от зацикливания
             if pos1 + self.first_dice < 25:
                 # условие на пустоту в треугольнике
-                if len(self.cells[pos1 + self.first_dice]) > 0:
-                    print(but.objectName()[5:10], self.cells[pos1 + self.first_dice][0].objectName())
+                if len(self.cells[pos1 + self.first_dice - 1]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if but.objectName()[5:10] in self.cells[pos1 + self.first_dice][0].objectName():
+                    if 'reddd' in self.cells[pos1 + self.first_dice - 1][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
                         if pos1 + self.first_dice < 11:
                             self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
                                               self.cells[pos1 + self.first_dice].y() + 52)
                         else:
-                            self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
-                                              self.cells[pos1 + self.first_dice].y() - 52)
+                            self.can_move_but.move(self.cells[pos1 + self.first_dice - 1].x(),
+                                              self.cells[pos1 + self.first_dice - 1].y() - 52)
+                    else:
+                        return
                 else:
                     # т к в треугольник мы можем пойти и он пустой
                     x, y = triangles[pos1 + self.first_dice][0], triangles[pos1 + self.first_dice][1]
                     self.can_move_but.move(x, y)
-
-            self.cells[pos1 + self.first_dice - 1] = [self.can_move_but] + self.cells[pos1 + self.first_dice - 1]
+            else:
+                return
         else:
             # защита от зацикливания
             if (0 < pos1 < 12 and (pos1 + self.first_dice < 13)) or pos1 > 12:
                 # условие на пустоту в треугольнике
-                if len(self.cells[(pos1 + self.first_dice) % 24]) > 0:
-                    print(but.objectName()[5:10], self.cells[(pos1 + self.first_dice) % 25][0].objectName())
+                if len(self.cells[(pos1 + self.first_dice) % 25]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if but.objectName()[5:10] in self.cells[(pos1 + self.first_dice) % 25][0].objectName():
+                    if 'white' in self.cells[(pos1 + self.first_dice) % 25][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
                         if 12 < pos1 + self.first_dice < 25:
                             self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
@@ -463,31 +462,32 @@ class Game(QtWidgets.QWidget):
                         else:
                             self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
                                               self.cells[pos1 + self.first_dice].y() - 52)
+                    else:
+                        return
                 else:
                     # т к в треугольник мы можем пойти и он пустой
                     x, y = triangles[pos1 + self.first_dice - 1][0], triangles[pos1 + self.first_dice - 1][1]
                     self.can_move_but.move(x, y)
-            self.cells[pos1 + self.first_dice - 1] = [self.can_move_but] + self.cells[pos1 + self.first_dice - 1]
+            else:
+                return
         self.can_move_but.show()
         self.can_move_but.clicked.connect(lambda: self.mover(pos1, self.first_dice))
 
-    # ПЕРВЫЙ СТОЛБЕЦ - СПИСОК. НАДО ПОФИКСИТЬ
+
     def mover(self, pos, dice):
-        m = self.cells[pos - 1][0][0]
-        self.cells[pos - 1][0] = self.cells[pos - 1][1:]
+        m = self.cells[pos - 1][0]
+        del self.cells[pos - 1][0]
         self.cells[pos + dice - 1] = [m] + self.cells[pos + dice - 1]
-        if 'reddd' in m.objectName():
-            x, y = triangles[pos + dice][0], triangles[pos + dice][1]
-        else:
-            x, y = triangles[pos + dice - 1][0], triangles[pos + dice - 1][1]
+        x, y = self.can_move_but.x(), self.can_move_but.y()
         self.cells[pos + dice - 1][0].move(x, y)
         self.can_move_but.deleteLater()
 
     # функция проверки наличия фишки на доске, которая возвращает -1 при отсутствии фишки и позицию фишки, если она находится не доске
     def on_desk(self, but):
-        for i in self.cells:
-            if but in i:
-                return self.cells.index(i)
+        for i, cell in enumerate(self.cells):
+            if but in cell:
+                return i
+        return -1
 
 
 # окно выбора цвета кубиков
