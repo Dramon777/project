@@ -424,49 +424,57 @@ class Game(QtWidgets.QWidget):
         pos1 = self.on_desk(but1) + 1
         print(pos1, pos1 + self.first_dice)
         self.can_move_but = self.create_chip('g', -1)
+        target_pos = pos1 + self.first_dice
         global triangles
         # разбиение на 2 случая, в зависимости от цвета фишки
+
+
+
+        # УСЛОВИЕ ПОСТАНОВКИ ФИШЕК НУЖНО ПРОРАБОТАТЬ И ПОФИКСИТЬ БАГИ
+
+
+
         if 'reddd' in but1.objectName():
             # защита от зацикливания
-            if pos1 + self.first_dice < 25:
+            if target_pos < 25:
                 # условие на пустоту в треугольнике
-                if len(self.cells[pos1 + self.first_dice - 1]) > 0:
+                if len(self.cells[target_pos - 1]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'reddd' in self.cells[pos1 + self.first_dice - 1][0].objectName():
+                    if 'reddd' in self.cells[target_pos - 1][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if pos1 + self.first_dice < 11:
-                            self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
-                                              self.cells[pos1 + self.first_dice].y() + 52)
+                        if target_pos < 13:
+                            self.can_move_but.move(self.cells[target_pos][0].x(),
+                                              self.cells[target_pos][0].y() + 52)
                         else:
-                            self.can_move_but.move(self.cells[pos1 + self.first_dice - 1].x(),
-                                              self.cells[pos1 + self.first_dice - 1].y() - 52)
+                            self.can_move_but.move(self.cells[target_pos - 1][0].x(),
+                                              self.cells[target_pos - 1][0].y() - 52)
                     else:
                         return
                 else:
                     # т к в треугольник мы можем пойти и он пустой
-                    x, y = triangles[pos1 + self.first_dice][0], triangles[pos1 + self.first_dice][1]
+                    x, y = triangles[target_pos][0], triangles[target_pos][1]
                     self.can_move_but.move(x, y)
             else:
                 return
         else:
             # защита от зацикливания
-            if (0 < pos1 < 12 and (pos1 + self.first_dice < 13)) or pos1 > 12:
+            if (0 < pos1 < 12 and (target_pos < 13)) or pos1 > 12:
                 # условие на пустоту в треугольнике
-                if len(self.cells[(pos1 + self.first_dice) % 25]) > 0:
+                if len(self.cells[target_pos % 25]) > 0:
                     # проверка на то, не стоит ли вражеская фишка на позиции, куда можно пойти
-                    if 'white' in self.cells[(pos1 + self.first_dice) % 25][0].objectName():
+                    if 'white' in self.cells[target_pos % 25][0].objectName():
                         # разбиение на случаи в зависимости от половины, в которую идём И ТАМ УЖЕ ЕСТЬ НАША ФИШКА
-                        if 12 < pos1 + self.first_dice < 25:
-                            self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
-                                              self.cells[pos1 + self.first_dice].y() + 52)
+                        if 12 < target_pos < 25:
+                            self.can_move_but.move(self.cells[target_pos].x(),
+                                              self.cells[target_pos][0].y() - 52)
                         else:
-                            self.can_move_but.move(self.cells[pos1 + self.first_dice].x(),
-                                              self.cells[pos1 + self.first_dice].y() - 52)
+                            self.can_move_but.move(self.cells[target_pos].x(),
+                                              self.cells[target_pos][0].y() + 52)
                     else:
                         return
                 else:
                     # т к в треугольник мы можем пойти и он пустой
-                    x, y = triangles[pos1 + self.first_dice - 1][0], triangles[pos1 + self.first_dice - 1][1]
+                    x, y = triangles[target_pos - 1][0], triangles[target_pos - 1][1]
                     self.can_move_but.move(x, y)
             else:
                 return
