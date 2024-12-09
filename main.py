@@ -238,7 +238,13 @@ class Game(QtWidgets.QWidget):
 
         self.can_move_but1 = None
         self.can_move_but2 = None
-        self.can_move_but3 = None
+
+        self.throwing_r = False
+        self.throwing_w = False
+
+        self.fl_w = False
+        self.fl_r = False
+
         self.num_of_last_pushed_but = ''
         self.setupUI()
 
@@ -284,7 +290,6 @@ class Game(QtWidgets.QWidget):
 
         # начальная генерация фишек
         for i in range(1, 16):
-
             # создание и отображение красных фишек
             chip1 = self.create_chip('r', i)
             chip1.move(195, 787 - (52 * i) + 52)
@@ -412,19 +417,27 @@ class Game(QtWidgets.QWidget):
         but.setObjectName(f'chip_{"white" if c == "w" else ("reddd" if c == "r" else "field")}_{str(num)}')
         return but
 
+    # вспомогательная объединяющая функция для движения
     def travel(self, but1):
         # Проверка на последнюю нажатую кнопку
-        if (self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and
+        if (self.num_of_last_pushed_but and self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and
             self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
+            print('\n')
             return
+        print('This button is another than before')
 
+        # Удаление предыдущих подсказок, если они есть
         if self.num_of_last_pushed_but:
-            self.can_move_but1.deleteLater()
-            self.can_move_but2.deleteLater()
+            self.clearer()
+        print('Helps are cleared')
 
         pos1 = self.on_desk(but1)
 
-        # создание подсказки для первого кубика
+        cnt = 0
+        for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
+            cnt += len(self.cells[i])
+
+        # Создание подсказки для первого кубика
         self.can_move_but1 = self.create_chip('g', -1)
         self.move_chip(but1, pos1, self.first_dice, self.can_move_but1)
 
@@ -432,33 +445,72 @@ class Game(QtWidgets.QWidget):
         self.can_move_but2 = self.create_chip('g', -1)
         self.move_chip(but1, pos1, self.second_dice, self.can_move_but2)
 
+    def is_throwing(self, but1):
+
+    # двигаем фику-подсказку
     def move_chip(self, but1, pos1, dice, move_button):
         target_pos = pos1 + dice
-        self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
 
-        if (target_pos > 23 and 'reddd' in but1.objectName()) or (target_pos % 24 > 11 and -1 < pos1 < 12 and 'white' in but1.objectName()):
-            return  # за пределами игрового поля
+        cnt, fl = 0, False
+        for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
+            cnt += len(self.cells[i])
 
-        if 'reddd' in but1.objectName():
-            player_color, enemy_color = 'reddd', 'white'
-        else:
-            player_color, enemy_color = 'white', 'reddd'
+        print(cnt)
+        print('\nChoosing mode')
 
-        # проверка условий для движения
-        if len(self.cells[target_pos % 24]) > 0:
-            if player_color in self.cells[target_pos % 24][0].objectName():
-                direction = -52 if target_pos < 12 else 52
-                move_button.move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
+        if not self.fl_r and'reddd' in but1.objectName():
+            if target_pos > 23:
+                if cnt == 15:
+                    self.fl_r = True
+                    print('Throwing mode')
+
+        if not self.fl_w and 'white' in but1.objectName():
+            if target_pos > 11:
+                if cnt == 15:
+                    self.fl_w = True
+                    print('Throwing mode')
+        if ('reddd' in but1.objectName() and not self.fl_r) or ('white' in but1.objectName() and not self.fl_w):
+            print('Moving mode')
+            # Проверка выхода за пределы игрового поля, при недостижении состояния выбрасывания
+            if 'white' in but1.objectName() and target_pos % 24 > 11 and -1 < pos1 < 12:
+                print('The chip is out of range before move and can"t throw')
+                print('\n')
+                return
+            # Проверка выхода за пределы игрового поля, при недостижении состояния выбрасывания
+            if 'reddd' in but1.objectName() and target_pos > 23:
+                print('The chip is out of range before move and can"t throw')
+                print('\n')
+                return
+
+            self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
+
+            print('The chip is NOT out of range after move')
+            player_color, enemy_color = ('reddd', 'white') if 'reddd' in but1.objectName() else ('white', 'reddd')
+
+            if len(self.cells[target_pos % 24]) > 0:
+                if player_color in self.cells[target_pos % 24][0].objectName():
+                    direction = -52 if target_pos % 24 < 12 else 52
+                    move_button.move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
+                    print("Enemy's chip NOT in the position")
+                else:
+                    print("Enemy's chip in the position")
+                    print('\n')
+                    return  # вражеская фишка на позиции
             else:
-                return  # вражеская фишка на позиции
+                x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
+                move_button.move(x, y)
+                print('The position is empty')
+
+                move_button.show()
+                move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
+                print('HELP WAS CREATED')
         else:
-            # целевая позиция пуста
-            x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
-            move_button.move(x, y)
+            # НАПИСАТЬ УЛОВИЕ ДЛЯ ОРГАНИЗАЦИИ ПОЯВЛЕНИЯ ВСПОМОГАТЕЛЬНЫХЪ ФИШЕК С УЧЁТОМ ТОГО, ЧТО КУБИК МОЖЕТ БЫТЬ НЕ РАВЕН ФИШКЕ, НАДО ПРОПИСАТЬ
+            if dice > pos1 % 6:
+                for i in range(dice, pos1)
+                self.throw(but1, pos1, move_button)
 
-        move_button.show()
-        move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
-
+    # двигаем игровую фишку
     def mover(self, pos, dice, to_pos):
         target_pos = pos + dice
         m = self.cells[pos][0]
@@ -466,19 +518,38 @@ class Game(QtWidgets.QWidget):
         self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
         x, y = to_pos.x(), to_pos.y()
         self.cells[target_pos % 24][0].move(x, y)
-
-        if self.can_move_but1:
-            self.can_move_but1.deleteLater()
-        if self.can_move_but2:
-            self.can_move_but2.deleteLater()
-
-        self.num_of_last_pushed_but = ''
+        print('The chip moved to position')
+        self.clearer()
+        print('Helps are cleared')
+        print('\n')
 
     def on_desk(self, but):
         for i, cell in enumerate(self.cells):
             if but in cell:
                 return i
         return -1
+
+    def clearer(self):
+        # Проверка и удаление каждой подсказки
+        if hasattr(self, 'can_move_but1') and self.can_move_but1:
+            self.can_move_but1.deleteLater()
+        if hasattr(self, 'can_move_but2') and self.can_move_but2:
+            self.can_move_but2.deleteLater()
+        self.num_of_last_pushed_but = ''
+
+    def throw(self, chip, pos, helping):
+        if 'reddd' in chip.objectName():
+            helping.move(100, 35)
+        else:
+            helping.move(1300, 787)
+        helping.show()
+        helping.clicked.connect(lambda: self.yes_throw(pos))
+
+    def yes_throw(self, pos):
+        print('CHIP IS THROWED')
+        self.cells[pos][0].deleteLater()
+        del self.cells[pos][0]
+        self.clearer()
 
 # окно выбора цвета кубиков
 

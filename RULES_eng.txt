@@ -1,73 +1,68 @@
-1. General Provisions.
+1. General provisions.
 
-1.1. Two players. The game is played on a special board divided into two halves.
- Each player has 15 checkers on the board, which are placed on their part of the board along
- the right side. The players have different sets of checkers, usually black and white.
- The number of dice is 2. The players take turns throwing the dice.
+1.1. Two people are playing. The game is played on a special board divided into two
+halves. The number of checkers on the board is 15 for each player, which are placed on
+their part of the board along the right side. The players have different sets of checkers,
+usually black and white. The number of dice is 2. The players take turns throwing dice.
 
 2. The meaning of the game.
 
-2.1. The player must make a full circle with all checkers (counterclockwise), enter them
- into the "home" and "throw them out" before the opponent does. The "home" for each player
- is the last quarter of the playing field - "white's home" - the 4th quarter
- and "black's home" - the 2nd quarter.
+2.1. The player must complete a full circle with all checkers (counterclockwise),
+enter the "house" with them and "throw" them before the opponent does.
+ The last quarter of the playing field is considered the "home" for each player —
+the "house of whites" - the IV quarter and the "house of blacks" - the II quarter.
 
-2.2. The term "throw out" means making a checker move so that it ends up outside the board.
-Checkers can be "thrown out" only after all checkers have "come to the home".
+2.2. The term "throw away" means to make a move with a checker so that it
+ends up outside the board. You can "throw away" checkers only after
+ after all the checkers "came to the house."
 
-3. The draw.
+3. The drawing.
 
-3.1. The player rolls two dice simultaneously. After the throw, the player moves any of his checkers
- a number of holes equal to the number of the dice that came up on one of the dice, and then any one
- checker a number of holes equal to the number of the dice that came up on the other dice. That is,
- if "three" came up on one dice and "five" on the other, then, accordingly, one can move one of his
- checkers three holes, and the other one five holes. In this case, one can move one checker eight holes.
- It does not matter which move to make first, the higher or lower number that came up.
- In this case, only one checker can be taken from the head.
+3.1. The player throws two dice at the same time. After the throw, the player moves
+any of his checkers by the number of holes equal to the dropped number of one of the zars,
+and then any one checker by the number of holes equal to the dropped number of the other
+zar. That is, if "three" fell out at one dawn and "five" at the other, then, accordingly,
+you can move one of your checkers to three holes and the other to five holes.
+In this case, you can move one checker to eight holes. Which move to make first,
+the larger number that falls out or the smaller one, does not matter. At the same time,
+you can take only one checker from the head.
 
- The first throw of the game provides players with an exception to the above rule. If one checker,
- which is the only one that can be taken from the head, does not pass, then the second one can be taken.
- There are only three such throws for a player: six-six (6**6); four-four (4**4); three-three (3**3).
- In this situation, it is not possible to play a full move with one checker, since the opponent's checkers
- standing on the head interfere. If one of these combinations comes up,
- the player can remove two checkers from the head.
 
- Note: When the whites first throw 5-5, and the blacks subsequently throw 4-4, the latter remove one
- checker from the head, playing one four, since the created obstacle prevents them from moving further.
+3.2. If the same number of points (jackpot) falls on both rounds, then the player
+plays as if he threw 4 zars and can make 4 moves.
 
-3.2. If the same number of points (jackpot) comes up on both digs,
- then the player plays as if he threw 4 digs and can make 4 moves.
+3.3. It is forbidden to put up a block (barrier; bridge) of six checkers. But it is
+not forbidden to build blocks of 6 checkers, however, all fifteen of the opponent's
+checkers cannot be locked. You have the right to build a barrier of six checkers
+only if at least one of the opponent's checkers is in front of this barrier.
 
-3.3. It is forbidden to put up a block (obstruction; bridge) of six checkers. But it is not forbidden
- to build blocks of 6 checkers, however, all fifteen of the opponent's checkers cannot be blocked.
- You have the right to build a barrier of six checkers only if at least one of the opponent's
- checkers is in front of this barrier.
+3.4. If the opponent's checkers occupy six squares in front of any checker,
+then it turns out to be locked.
 
-3.4. If the opponent's checkers occupy six squares in front of a checker, then it is locked.
+3.5. If the checkers are locked so that the player cannot make a single move for the
+number of points that he threw away (the checkers "do not go"), then the player's
+points disappear, and the checkers do not move at all.
 
-3.5. If the checkers are locked in such a way that the player cannot make a single move for
-the number of points that he rolled on the zars (the checkers "do not move"),
-then the player's points are lost, and the checkers do not move at all.
+3.6. An arbitrary number of checkers can be placed on one field.
+You cannot put your own checker on the hole occupied by the opponent. In a situation where
+checkers do not go, that is, the player cannot move them by the number of holes that fell
+on the balls (the checkers fall on the occupied holes), all points disappear, and the player
+skips a turn. In a situation where you can make a move on the number of holes that fell on
+one of the rounds, and you cannot move the checker to the number of holes that fell on the other
+dawn, only a possible move is performed, and the points of the second are lost. The player cannot
+give up a full turn, even if he doesn't benefit from it.
 
-3.6. Any number of checkers may be placed on one square. You may not place your checker
- on a hole occupied by the opponent. In a situation where the checkers do not move, that is,
- the player cannot move them by the number of holes that fell on the zars
- (the checkers fall on occupied holes), all points are lost, and the player misses a move.
- In a situation where it is possible to make a move for the number of holes that fell on one
- of the zars, and it is impossible to move a checker by the number of holes that fell on the
- other zar, only the possible move is made, and the points of the second are lost. A player
- cannot refuse a full move, even if it is not advantageous to him.
+3.7. The output of checkers is as follows. The player has the right to remove a checker from the board,
+ which stands on the hole corresponding to the number of points thrown at the start. For example, if
+6-3 falls out, the player can remove one checker from the 6th field and one checker from the 3rd field
+from the board.
 
-3.7. The checkers are removed as follows. The player has the right to remove from the board
- a checker that is on a hole corresponding to the number of points thrown on the zarakh.
- For example, if 6-3 is thrown, the player can remove from the board one checker from the
- 6th square and one checker from the 3rd square.
+3.8. In the process of removing checkers from the house, the player has the right to use the points that
+fell out at the beginning, at his discretion: he can play a checker in the house or throw it away.
+In the process of removing checkers from one's own house, it is allowed to remove checkers from the
+fields of the lowest a discharge, if there are no checkers in the fields of the highest grade. For example,
+if 6-5 fell at the beginning, and there are no checkers on fields 6 and 5, then the player can take two
+checkers out of the house from the next in order, the fourth field (hole), if there are no checkers there,
+then from the third, if not there, then from the second, etc.
 
-3.8. In the process of removing checkers from the home board, the player has the right to use
- the points that fell on the zarakh at his own discretion: he can play the checker in the home
- board or throw it away. In the process of removing checkers from one's own home board, it is
- allowed to remove checkers from the fields of a lower rank if there are no checkers in the
- fields of a higher rank. For example, if the dice show 6-5, and there are no checkers on the
- 6 and 5 fields, then the player can take two checkers out of the house from the next in order,
- the fourth field (hole), if there are no checkers there either, then from the third,
- if there are none there either, then from the second, etc. The game ends.
+The party is ending.
