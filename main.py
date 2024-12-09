@@ -510,6 +510,7 @@ class Game(QtWidgets.QWidget):
                 for i in range(dice, pos1)
                 self.throw(but1, pos1, move_button)
 
+
     # двигаем игровую фишку
     def mover(self, pos, dice, to_pos):
         target_pos = pos + dice
