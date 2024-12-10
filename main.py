@@ -2,6 +2,7 @@ import codecs
 import sys
 import this
 from random import randint
+from traceback import print_tb
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
@@ -228,7 +229,6 @@ class Game(QtWidgets.QWidget):
 
         self.first_dice = 0
         self.second_dice = 0
-        self.txt_lbl = None
         self.red_chips = None
         self.white_chips = None
         self.is_same = False
@@ -288,30 +288,58 @@ class Game(QtWidgets.QWidget):
         self.cells = []
         self.helper = [[], []]
 
-        # начальная генерация фишек
-        for i in range(1, 16):
-            # создание и отображение красных фишек
-            chip1 = self.create_chip('r', i)
-            chip1.move(195, 787 - (52 * i) + 52)
+        # дебаг выброса фишек
+        a = input()
+        if a == 'debug':
+            # начальная генерация фишек
+            for i in range(1, 16):
+                # создание и отображение красных фишек
+                chip1 = self.create_chip('r', i)
+                chip1.move(triangles[18][0], (52 * i) - 17)
 
-            # создание и отображение белых фишек
-            chip2 = self.create_chip('w', i)
-            chip2.move(1200, (52 * i) - 17)
+                # создание и отображение белых фишек
+                chip2 = self.create_chip('w', i)
+                chip2.move(triangles[6][0], 787 - (52 * i) + 52)
 
-            chip1.clicked.connect(lambda checked, chip=chip1: self.travel(chip))
-            chip2.clicked.connect(lambda checked, chip=chip2: self.travel(chip))
+                chip1.clicked.connect(lambda checked, chip=chip1: self.travel(chip))
+                chip2.clicked.connect(lambda checked, chip=chip2: self.travel(chip))
 
-            self.helper[0].insert(0, chip1)
-            self.helper[1].insert(0, chip2)
+                self.helper[0].insert(0, chip1)
+                self.helper[1].insert(0, chip2)
 
-        # внутренняя реализация игрового поля вида:
-        # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
-        # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
+            # внутренняя реализация игрового поля вида:
+            # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
+            # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
+            self.cells = self.cells + [[], [], [], [], [], []]
+            self.cells.append(self.helper[1])
+            self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+            self.cells.append(self.helper[0])
+            self.cells = self.cells + [[], [], [], [], []]
+        else:
+            # начальная генерация фишек
+            for i in range(1, 16):
+                # создание и отображение красных фишек
+                chip1 = self.create_chip('r', i)
+                chip1.move(195, 787 - (52 * i) + 52)
 
-        self.cells.append(self.helper[0])
-        self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
-        self.cells.append(self.helper[1])
-        self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+                # создание и отображение белых фишек
+                chip2 = self.create_chip('w', i)
+                chip2.move(1200, (52 * i) - 17)
+
+                chip1.clicked.connect(lambda checked, chip=chip1: self.travel(chip))
+                chip2.clicked.connect(lambda checked, chip=chip2: self.travel(chip))
+
+                self.helper[0].insert(0, chip1)
+                self.helper[1].insert(0, chip2)
+
+            # внутренняя реализация игрового поля вида:
+            # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
+            # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
+
+            self.cells.append(self.helper[0])
+            self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+            self.cells.append(self.helper[1])
+            self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
 
         # отчистка вспомогательного списка
         self.helper.clear()
@@ -333,8 +361,6 @@ class Game(QtWidgets.QWidget):
             self.lbl_dice3.clear()
         if not self.lbl_dice4 is None:
             self.lbl_dice4.clear()
-        if not self.txt_lbl is None:
-            self.txt_lbl.clear()
 
         # бросок кубиков + защита от спама кнопки
 
@@ -348,7 +374,6 @@ class Game(QtWidgets.QWidget):
         global dice_color
         self.lbl_dice1 = QLabel(self)
         self.lbl_dice2 = QLabel(self)
-        self.txt_lbl = QLabel(self)
 
         # настройка первого кубика
 
@@ -395,14 +420,6 @@ class Game(QtWidgets.QWidget):
 
         self.lbl_dice1.show()
         self.lbl_dice2.show()
-        # настройка и отображение суммы значений выпавших кубиков
-        if my_sys_lang == 'Eng':
-            self.txt_lbl.setText(f'Sum = {self.first_dice + self.second_dice}')
-        else:
-            self.txt_lbl.setText(f'Сумма = {self.first_dice + self.second_dice}')
-        self.txt_lbl.move(1445, 455)
-        self.txt_lbl.setStyleSheet("font-size: 20px;")
-        self.txt_lbl.show()
 
     # функция создания фишки
     def create_chip(self, c, num):
@@ -445,9 +462,7 @@ class Game(QtWidgets.QWidget):
         self.can_move_but2 = self.create_chip('g', -1)
         self.move_chip(but1, pos1, self.second_dice, self.can_move_but2)
 
-    def is_throwing(self, but1):
-
-    # двигаем фику-подсказку
+    # двигаем фишку-подсказку
     def move_chip(self, but1, pos1, dice, move_button):
         target_pos = pos1 + dice
 
@@ -469,6 +484,8 @@ class Game(QtWidgets.QWidget):
                 if cnt == 15:
                     self.fl_w = True
                     print('Throwing mode')
+
+        # если не стоит режим выбрасывания у этой фишки, то она находится в режиме движения
         if ('reddd' in but1.objectName() and not self.fl_r) or ('white' in but1.objectName() and not self.fl_w):
             print('Moving mode')
             # Проверка выхода за пределы игрового поля, при недостижении состояния выбрасывания
@@ -501,16 +518,56 @@ class Game(QtWidgets.QWidget):
                 move_button.move(x, y)
                 print('The position is empty')
 
+            move_button.show()
+            move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
+            print('HELP WAS CREATED')
+        else:
+            # отчистка вспомогательного списка
+            self.helper.clear()
+            print('Start throwing')
+            # ПОФИКСИТЬ БАГИ ИЗ-ЗА КОТОРЫХ КРАШИТСЯ ПРОГА
+            self.clearer()
+
+            pos = 6 - (pos1 % 6)
+            if dice == pos: # когда кубик = позиции фишки - выбрасываем
+                print('==')
+                self.throw(but1, pos1, move_button)
+            elif dice < pos: # когда кубик < позиции фишки, если можем подвигать - двигаем, если нет, но ничего
+                print('<')
+                if len(self.cells[target_pos % 24]) > 0:
+                    player_color, enemy_color = ('reddd', 'white') if 'reddd' in but1.objectName() else (
+                    'white', 'reddd')
+                    if player_color in self.cells[target_pos % 24][0].objectName():
+                        direction = -52 if target_pos % 24 < 12 else 52
+                        move_button.move(self.cells[target_pos % 24][0].x(),
+                                         self.cells[target_pos % 24][0].y() + direction)
+                        print("Enemy's chip NOT in the position")
+                    else:
+                        print("Enemy's chip in the position")
+                        print('\n')
+                        return  # вражеская фишка на позиции
+                else:
+                    x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
+                    move_button.move(x, y)
+                    print('The position is empty')
+
                 move_button.show()
                 move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
                 print('HELP WAS CREATED')
-        else:
-            # НАПИСАТЬ УЛОВИЕ ДЛЯ ОРГАНИЗАЦИИ ПОЯВЛЕНИЯ ВСПОМОГАТЕЛЬНЫХЪ ФИШЕК С УЧЁТОМ ТОГО, ЧТО КУБИК МОЖЕТ БЫТЬ НЕ РАВЕН ФИШКЕ, НАДО ПРОПИСАТЬ
-            if dice > pos1 % 6:
-                for i in range(dice, pos1)
+            else: # когда кубик > позиции фишки
+                print('>')
+
                 self.throw(but1, pos1, move_button)
 
-
+    def nothing_before(self, dice, but1):
+        if 'reddd' in but1.objectName():
+            a = self.cells[18:24]
+        else:
+            a = self.cells[6:12]
+        for i in range(0, 7 - dice):
+            if len(a[i]) > 0: # если есть фишка слева от позиции выбранной
+                return False
+        return True
     # двигаем игровую фишку
     def mover(self, pos, dice, to_pos):
         target_pos = pos + dice
