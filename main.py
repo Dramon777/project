@@ -161,6 +161,7 @@ def error_of_dice_color(self1):
     self1.hide()
     wnd_error.show()
 
+
 # функция выбора режима игры игрока против бота
 def vsBot():
     global game_mod
@@ -213,6 +214,7 @@ class Error(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
 
+
 # окно игры
 
 class Game(QtWidgets.QWidget):
@@ -260,6 +262,9 @@ class Game(QtWidgets.QWidget):
         self.player_color_now = ''
         self.moving_player = None
         self.num_of_last_pushed_but = ''
+
+        self.on_start = None
+        self.play_but = None
         self.setupUI()
 
     def setupUI(self):
@@ -273,6 +278,8 @@ class Game(QtWidgets.QWidget):
 
         self.moving_player = QLabel(self)
         self.moving_player.setText('Бросьте кубики')
+        self.moving_player.setStyleSheet("font-size: 22px;")
+        self.moving_player.move(1490, 600)
 
         if my_sys_lang == 'Рус':
             # кнопка броска кубиков
@@ -328,20 +335,54 @@ class Game(QtWidgets.QWidget):
             self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
             self.cells.append(self.helper[1])
             self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
-
         # отчистка вспомогательного списка
         self.helper.clear()
+        self.play_but = QtWidgets.QPushButton('PLAY', self)
+        self.play_but.setStyleSheet("font-size: 30px;")
+        self.play_but.move(720, 436)
+        self.play_but.setGeometry(600, 356, 240, 160)
+        self.play_but.show()
+        self.play_but.clicked.connect(self.play)
+        self.button_throw_dice.setEnabled(False)
+
+    def play(self):
+        global game_mod
+        self.play_but.deleteLater()
         if game_mod == '1vs1':
             self.play_1vs1()
         else:
             self.play_vs_bot()
 
+    # ЦИКЛИЦА ЫЫЫЫЫЫЫЫЫЫ
     # игра 1 на 1
     def play_1vs1(self):
-        if self.player_color_now == '':
+        # начало игры - кто ходит
+        helpi = None
+        while self.player_color_now == '':
+            if self.on_start is None:
+                self.throwed()
+                helpi = self.on_start
+                self.on_start = None
+                print('jopa1')
 
+            if helpi == self.on_start:
+                helpi = None
+                self.on_start = None
+                print('jopa2')
+                continue
+
+            if self.on_start is not None:
+                self.player_color_now = 'reddd' if helpi > self.on_start else 'white'
+        # пока кто-то не выбросит все фишки
         while not self.is_game_end(self.player_color_now):
+            self.moving_player.setText(f'Ходят {"белые" if self.player_color_now == "white" else "красные"}')
+            self.button_throw_dice.setEnabled(True)
 
+    # меняем цвета ходящего игрока
+    def change_player(self):
+        self.player_color_now = 'white' if 'reddd' in self.player_color_now else 'reddd'
+
+    # игра против бота
     def play_vs_bot(self):
         ...
 
@@ -360,6 +401,7 @@ class Game(QtWidgets.QWidget):
 
     # функция броска кубиков
     def throwed(self):
+        self.button_throw_dice.setEnabled(False)
         if not self.lbl_dice1 is None:
             self.lbl_dice1.clear()
         if not self.lbl_dice2 is None:
@@ -368,17 +410,28 @@ class Game(QtWidgets.QWidget):
             self.lbl_dice3.clear()
         if not self.lbl_dice4 is None:
             self.lbl_dice4.clear()
+        global dice_color
+
+        # если самое начало игры, когда игроки выявляют, кто будет первым ходить
+        if self.player_color_now == '':
+            self.button_throw_dice.setEnabled(False)
+            self.first_dice = randint(1, 6)
+            self.on_start = self.first_dice
+            self.lbl_dice1 = QLabel(self)
+            self.pixmap_dice1 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
+            self.lbl_dice1.setPixmap(self.pixmap_dice1)
+            self.lbl_dice1.move(1470, 5)
+            self.lbl_dice1.show()
+            return
 
         # бросок кубиков + защита от спама кнопки
 
         self.first_dice = randint(1, 6)
         self.second_dice = randint(1, 6)
-        self.button_throw_dice.setEnabled(False)
         print(self.first_dice, self.second_dice)
 
         # отображение кубиков на панели справа
 
-        global dice_color
         self.lbl_dice1 = QLabel(self)
         self.lbl_dice2 = QLabel(self)
 
@@ -461,26 +514,27 @@ class Game(QtWidgets.QWidget):
         for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
             cnt += len(self.cells[i])
 
-        # Создание подсказки для первого кубика
-        self.can_move_but1 = self.create_chip('g', -1)
-        self.move_chip(but1, pos1, self.first_dice, self.can_move_but1)
+        if self.first_dice != -1000:
+            # Создание подсказки для первого кубика
+            self.can_move_but1 = self.create_chip('g', -1)
+            self.move_chip(but1, pos1, self.first_dice, self.can_move_but1)
 
-        # Создание подсказки для второго кубика
-        self.can_move_but2 = self.create_chip('g', -1)
-        self.move_chip(but1, pos1, self.second_dice, self.can_move_but2)
+            # Создание подсказки для выбрасывания от первого кубика
+            self.can_throw_but1 = self.create_chip('g', -2)
+            self.move_chip(but1, pos1, self.first_dice, self.can_throw_but1)
 
-        # Создание подсказки для выбрасывания от первого кубика
-        self.can_throw_but1 = self.create_chip('g', -2)
-        self.move_chip(but1, pos1, self.first_dice, self.can_throw_but1)
+        if self.second_dice != -1000:
+            # Создание подсказки для второго кубика
+            self.can_move_but2 = self.create_chip('g', -1)
+            self.move_chip(but1, pos1, self.second_dice, self.can_move_but2)
 
-        # Создание подсказки для выбрасывания от второго кубика
-        self.can_throw_but2 = self.create_chip('g', -2)
-        self.move_chip(but1, pos1, self.second_dice, self.can_throw_but2)
+            # Создание подсказки для выбрасывания от второго кубика
+            self.can_throw_but2 = self.create_chip('g', -2)
+            self.move_chip(but1, pos1, self.second_dice, self.can_throw_but2)
 
     # двигаем фишку-подсказку
     def move_chip(self, but1, pos1, dice, move_button):
         target_pos = pos1 + dice
-
         # Проверка выхода за пределы игрового поля, при недостижении состояния выбрасывания
         if '-1' in move_button.objectName():
             if (('white' in but1.objectName() and target_pos % 24 > 11 and -1 < pos1 < 12) or
@@ -566,6 +620,22 @@ class Game(QtWidgets.QWidget):
         self.clearer()
         print('Helps are cleared')
         print('\n')
+        # удаляем поочерёдно кубики, которыми ходим
+        if self.first_dice == self.second_dice and self.lbl_dice3 is not None:
+            if not self.lbl_dice4 is None:
+                self.lbl_dice4.clear()
+            elif not self.lbl_dice3 is None:
+                self.lbl_dice3.clear()
+        else:
+            if dice == self.first_dice and not self.lbl_dice1 is None:
+                self.lbl_dice1.clear()
+                self.first_dice = -1000
+            elif not self.lbl_dice2 is None:
+                self.second_dice = -1000
+                self.lbl_dice2.clear()
+
+        if self.first_dice == self.second_dice == -1000:
+            self.change_player()
 
     # номер лунки, в которой находится текущая фишка
     def on_desk(self, but):
@@ -701,6 +771,7 @@ class ChooseDiceColor(QtWidgets.QWidget):
             self.close()
         else:
             error_of_dice_color(self)
+
 
 # окно выбора режима
 
