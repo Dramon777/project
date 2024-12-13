@@ -402,6 +402,7 @@ class Game(QtWidgets.QWidget):
             self.player_color_now = 'white' if 'reddd' == self.player_color_now else 'reddd'  # Стартуем с красного игрока
 
 
+
     # !!!!!!!!!!!!!ДОБАВИТЬ УСЛОВИЯ ПРО ВЫБРОС ФИШЕК И ПОФИКСИТЬ ТЕКУЩИЕ УСЛОВИЯ, ПОКА ЧТО ВЫЛЕТАЕТ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def check_available_moves(self):
 
