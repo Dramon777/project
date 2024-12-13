@@ -2,6 +2,7 @@ import codecs
 import sys
 import this
 from random import randint
+from symbol import continue_stmt
 from traceback import print_tb
 
 from PyQt5 import QtCore, QtWidgets
@@ -262,9 +263,9 @@ class Game(QtWidgets.QWidget):
         self.player_color_now = ''
         self.moving_player = None
         self.num_of_last_pushed_but = ''
+        self.butplay = None
 
-        self.on_start = None
-        self.play_but = None
+        self.success = False
         self.setupUI()
 
     def setupUI(self):
@@ -337,50 +338,119 @@ class Game(QtWidgets.QWidget):
             self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
         # отчистка вспомогательного списка
         self.helper.clear()
-        self.play_but = QtWidgets.QPushButton('PLAY', self)
-        self.play_but.setStyleSheet("font-size: 30px;")
-        self.play_but.move(720, 436)
-        self.play_but.setGeometry(600, 356, 240, 160)
-        self.play_but.show()
-        self.play_but.clicked.connect(self.play)
-        self.button_throw_dice.setEnabled(False)
+        self.butplay = QtWidgets.QPushButton('PLAY GAME' if my_sys_lang == 'Eng' else 'Начать игру', self)
+        self.butplay.setStyleSheet("font-size: 35px;")
+        self.butplay.move(600, 400)
+        self.butplay.clicked.connect(self.play)
 
     def play(self):
+        self.butplay.hide()
         global game_mod
-        self.play_but.deleteLater()
         if game_mod == '1vs1':
             self.play_1vs1()
         else:
             self.play_vs_bot()
 
-    # ЦИКЛИЦА ЫЫЫЫЫЫЫЫЫЫ
+
     # игра 1 на 1
     def play_1vs1(self):
-        # начало игры - кто ходит
-        helpi = None
-        while self.player_color_now == '':
-            if self.on_start is None:
-                self.throwed()
-                helpi = self.on_start
-                self.on_start = None
-                print('jopa1')
+        # Инициализация переменных для отслеживания текущего игрока
+        self.player_color_now = 'reddd' if randint(1, 2) == 1 else 'white'
+        self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
 
-            if helpi == self.on_start:
-                helpi = None
-                self.on_start = None
-                print('jopa2')
+        while True:
+            # Проверяем, не закончилась ли игра
+            if self.is_game_end('reddd'):
+                print("Белые выиграли!")
+                break
+            elif self.is_game_end('white'):
+                print("Красные выиграли!")
+                break
+
+            self.button_throw_dice.setEnabled(True)
+
+            # Ожидание броска кубиков
+            QtWidgets.QApplication.processEvents()  # Позволяем интерфейсу обновляться
+            while self.button_throw_dice.isEnabled():
+                QtWidgets.QApplication.processEvents()
+
+            # После броска кубиков начинаем ход
+            self.button_throw_dice.setEnabled(False)
+            # Логика хода игрока
+            valid_move = False
+            while not valid_move:
+                # Ожидаем, пока игрок сделает движение
+                QtWidgets.QApplication.processEvents()
+                # Если игрок не может сделать ход, меняем игрока
+                if self.first_dice == -1000 and self.second_dice == -1000:
+                    self.change_player()
+                    valid_move = True
+                    continue
+
+                # Проверяем, есть ли доступные ходы
+                available_moves = self.check_available_moves()
+                if not available_moves:
+                    print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
+                    self.change_player()
+                    valid_move = True
+                    continue
+
+                # Если доступны ходы, продолжаем ожидать движения игрока
+                valid_move = self.handle_player_move()
+
+            # После хода меняем игрока
+            self.player_color_now = 'white' if 'reddd' == self.player_color_now else 'reddd'  # Стартуем с красного игрока
+
+
+    # !!!!!!!!!!!!!ДОБАВИТЬ УСЛОВИЯ ПРО ВЫБРОС ФИШЕК И ПОФИКСИТЬ ТЕКУЩИЕ УСЛОВИЯ, ПОКА ЧТО ВЫЛЕТАЕТ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    def check_available_moves(self):
+
+        # если кубики использованы, то ходить мы не можем
+        if self.first_dice == -1000 and self.second_dice == -1000:
+            return False
+
+        for i in self.cells:
+            # если текущее поле пустое - не смотрим
+            print(1)
+            if len(i) == 0:
                 continue
 
-            if self.on_start is not None:
-                self.player_color_now = 'reddd' if helpi > self.on_start else 'white'
-        # пока кто-то не выбросит все фишки
-        while not self.is_game_end(self.player_color_now):
-            self.moving_player.setText(f'Ходят {"белые" if self.player_color_now == "white" else "красные"}')
-            self.button_throw_dice.setEnabled(True)
+            print(2)
+            # если текущее рассматриваемое поле вражеское - не смотрим
+            if self.player_color_now not in i[0].objectName:
+                continue
+
+            print(3)
+            # если 1 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
+            if self.first_dice != -1000:
+                print(4)
+                if len(self.cells[(i + self.first_dice) % 24]) != 0 and self.player_color_now not in self.cells[(i + self.first_dice) % 24][0].objectName():
+                    continue
+
+            print(6)
+            # если 2 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
+            if self.second_dice != -1000:
+                print(7)
+                if len(self.cells[(i + self.second_dice) % 24]) != 0 and self.player_color_now not in self.cells[(i + self.second_dice) % 24][0].objectName():
+                    continue
+
+            return True
+        return False
+
+    def handle_player_move(self):
+        if self.success:
+            self.success = False
+            return True
+        else:
+            return False
 
     # меняем цвета ходящего игрока
     def change_player(self):
-        self.player_color_now = 'white' if 'reddd' in self.player_color_now else 'reddd'
+        self.player_color_now = 'white' if 'reddd' == self.player_color_now else 'reddd'
+        print('Color has changed')
+
+        # Уведомляем текущего игрока о необходимости бросить кубики
+        self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
 
     # игра против бота
     def play_vs_bot(self):
@@ -411,18 +481,6 @@ class Game(QtWidgets.QWidget):
         if not self.lbl_dice4 is None:
             self.lbl_dice4.clear()
         global dice_color
-
-        # если самое начало игры, когда игроки выявляют, кто будет первым ходить
-        if self.player_color_now == '':
-            self.button_throw_dice.setEnabled(False)
-            self.first_dice = randint(1, 6)
-            self.on_start = self.first_dice
-            self.lbl_dice1 = QLabel(self)
-            self.pixmap_dice1 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
-            self.lbl_dice1.setPixmap(self.pixmap_dice1)
-            self.lbl_dice1.move(1470, 5)
-            self.lbl_dice1.show()
-            return
 
         # бросок кубиков + защита от спама кнопки
 
@@ -496,6 +554,12 @@ class Game(QtWidgets.QWidget):
 
     # вспомогательная объединяющая функция для движения
     def travel(self, but1):
+        # Проверка, что фишка принадлежит текущему игроку
+        player_color = 'reddd' if 'reddd' in but1.objectName() else 'white'
+        if player_color != self.player_color_now:
+            print("Нельзя ходить вражеской фишкой!")
+            return
+
         # Проверка на последнюю нажатую кнопку
         if (self.num_of_last_pushed_but and self.num_of_last_pushed_but[-2:] == but1.objectName()[-2:] and
             self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
@@ -503,12 +567,13 @@ class Game(QtWidgets.QWidget):
             return
         print('This button is another than before')
 
+        pos1 = self.on_desk(but1)
+
         # Удаление предыдущих подсказок, если они есть
         if self.num_of_last_pushed_but:
             self.clearer()
         print('Helps are cleared')
 
-        pos1 = self.on_desk(but1)
 
         cnt = 0
         for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
@@ -534,6 +599,9 @@ class Game(QtWidgets.QWidget):
 
     # двигаем фишку-подсказку
     def move_chip(self, but1, pos1, dice, move_button):
+        # если кубик выброшен до этого
+        if dice == -1000:
+            return
         target_pos = pos1 + dice
         # Проверка выхода за пределы игрового поля, при недостижении состояния выбрасывания
         if '-1' in move_button.objectName():
@@ -610,6 +678,7 @@ class Game(QtWidgets.QWidget):
 
     # двигаем игровую фишку
     def mover(self, pos, dice, to_pos):
+        print(self.first_dice, self.second_dice, self.first_dice + pos, self.second_dice + pos)
         target_pos = pos + dice
         m = self.cells[pos][0]
         del self.cells[pos][0]
@@ -620,22 +689,26 @@ class Game(QtWidgets.QWidget):
         self.clearer()
         print('Helps are cleared')
         print('\n')
+        self.success = True
         # удаляем поочерёдно кубики, которыми ходим
+        # если выпали одинаковые кубики
         if self.first_dice == self.second_dice and self.lbl_dice3 is not None:
-            if not self.lbl_dice4 is None:
+            if self.lbl_dice4 is not None:
                 self.lbl_dice4.clear()
-            elif not self.lbl_dice3 is None:
+                self.lbl_dice4 = None
+            elif self.lbl_dice3 is not None:
                 self.lbl_dice3.clear()
-        else:
-            if dice == self.first_dice and not self.lbl_dice1 is None:
-                self.lbl_dice1.clear()
-                self.first_dice = -1000
-            elif not self.lbl_dice2 is None:
+                self.lbl_dice3 = None
+        else:  # если кубики разные, или перестало выполняться условие для одинаковых кубиков
+            if dice == self.first_dice:
+                if self.lbl_dice1 is not None:
+                    self.lbl_dice1.clear()
+                    self.first_dice = -1000
+                    self.lbl_dice1 = None
+            elif self.lbl_dice2 is not None:
                 self.second_dice = -1000
                 self.lbl_dice2.clear()
-
-        if self.first_dice == self.second_dice == -1000:
-            self.change_player()
+                self.lbl_dice2 = None
 
     # номер лунки, в которой находится текущая фишка
     def on_desk(self, but):
@@ -647,14 +720,14 @@ class Game(QtWidgets.QWidget):
     # очистка игрового поля от подсказок
     def clearer(self):
         # Проверка и удаление каждой подсказки
-        if hasattr(self, 'can_move_but1') and self.can_move_but1:
-            self.can_move_but1.deleteLater()
-        if hasattr(self, 'can_move_but2') and self.can_move_but2:
-            self.can_move_but2.deleteLater()
-        if hasattr(self, 'can_throw_but1') and self.can_throw_but1:
-            self.can_throw_but1.deleteLater()
-        if hasattr(self, 'can_throw_but2') and self.can_throw_but2:
-            self.can_throw_but2.deleteLater()
+        if hasattr(self, 'can_move_but1') and self.can_move_but1 is not None:
+            self.can_move_but1.hide()
+        if hasattr(self, 'can_move_but2') and self.can_move_but2 is not None:
+            self.can_move_but2.hide()
+        if hasattr(self, 'can_throw_but1') and self.can_throw_but1 is not None:
+            self.can_throw_but1.hide()
+        if hasattr(self, 'can_throw_but2') and self.can_throw_but2 is not None:
+            self.can_throw_but2.hide()
         self.num_of_last_pushed_but = ''
 
     # создание подсказки для выбрасывания фишки
