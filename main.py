@@ -277,7 +277,7 @@ class Game(QtWidgets.QWidget):
         self.moving_player = QLabel(self)
         self.moving_player.setText('Бросьте кубики')
         self.moving_player.setStyleSheet("font-size: 20px;")
-        self.moving_player.setGeometry(1440, 600, 260, 30)
+        self.moving_player.setGeometry(1445, 600, 260, 30)
 
         if my_sys_lang == 'Рус':
             # кнопка броска кубиков
@@ -337,7 +337,7 @@ class Game(QtWidgets.QWidget):
         self.helper.clear()
         self.butplay = QtWidgets.QPushButton('PLAY GAME' if my_sys_lang == 'Eng' else 'Начать игру', self)
         self.butplay.setStyleSheet("font-size: 35px;")
-        self.butplay.move(600, 400)
+        self.butplay.setGeometry(QtCore.QRect(1441, 654, 258, 73))
         self.butplay.clicked.connect(self.play)
 
     def play(self):
@@ -882,7 +882,7 @@ class ChooseGameMode(QtWidgets.QWidget):
         self.game_mod_1vs1.clicked.connect(one_vs_one)
 
         self.game_mod_versus_bot.setStyleSheet("font-size: 18px;")
-        self.game_mod_versus_bot.setGeometry(QtCore.QRect(160, 40, 100, 45))
+        self.game_mod_versus_bot.setGeometry(QtCore.QRect(150, 40, 130, 45))
         self.game_mod_versus_bot.setObjectName("game_mod_you_vs_bot")
         self.game_mod_versus_bot.clicked.connect(vsBot)
 
@@ -1133,7 +1133,7 @@ class Menu(QtWidgets.QWidget):
         self.lbl1.setGeometry(75, 5, 500, 90)
         self.lbl1.setStyleSheet("font-size: 40px;")
 
-        self.lbl2.setGeometry(275, 520, 400, 25)
+        self.lbl2.setGeometry(120, 520, 400, 25)
 
         self.change_lang.setGeometry(QtCore.QRect(100, 470, 300, 50))
         self.change_lang.setObjectName("change_language")
