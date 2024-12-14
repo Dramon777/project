@@ -1,9 +1,6 @@
 import codecs
 import sys
-import this
 from random import randint
-from symbol import continue_stmt
-from traceback import print_tb
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
@@ -279,8 +276,8 @@ class Game(QtWidgets.QWidget):
 
         self.moving_player = QLabel(self)
         self.moving_player.setText('Бросьте кубики')
-        self.moving_player.setStyleSheet("font-size: 22px;")
-        self.moving_player.move(1490, 600)
+        self.moving_player.setStyleSheet("font-size: 20px;")
+        self.moving_player.setGeometry(1440, 600, 260, 30)
 
         if my_sys_lang == 'Рус':
             # кнопка броска кубиков
@@ -367,7 +364,7 @@ class Game(QtWidgets.QWidget):
                 print("Красные выиграли!")
                 break
 
-            self.button_throw_dice.setEnabled(True)
+            # self.button_throw_dice.setEnabled(True)
 
             # Ожидание броска кубиков
             QtWidgets.QApplication.processEvents()  # Позволяем интерфейсу обновляться
@@ -376,79 +373,56 @@ class Game(QtWidgets.QWidget):
 
             # После броска кубиков начинаем ход
             self.button_throw_dice.setEnabled(False)
-            # Логика хода игрока
-            valid_move = False
-            while not valid_move:
-                # Ожидаем, пока игрок сделает движение
-                QtWidgets.QApplication.processEvents()
-                # Если игрок не может сделать ход, меняем игрока
-                if self.first_dice == -1000 and self.second_dice == -1000:
-                    self.change_player()
-                    valid_move = True
-                    continue
+            self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, ходите!")
 
-                # Проверяем, есть ли доступные ходы
-                available_moves = self.check_available_moves()
-                if not available_moves:
-                    print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
-                    self.change_player()
-                    valid_move = True
-                    continue
-
-                # Если доступны ходы, продолжаем ожидать движения игрока
-                valid_move = self.handle_player_move()
-
-            # После хода меняем игрока
-            self.player_color_now = 'white' if 'reddd' == self.player_color_now else 'reddd'  # Стартуем с красного игрока
-
-
+            # Проверяем, есть ли доступные ходы
+            available_moves = self.check_available_moves()
+            if not available_moves:
+                print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
+                self.change_player()
+                self.first_dice = self.second_dice = -1000
+                self.button_throw_dice.setEnabled(True)
+                continue
 
     # !!!!!!!!!!!!!ДОБАВИТЬ УСЛОВИЯ ПРО ВЫБРОС ФИШЕК И ПОФИКСИТЬ ТЕКУЩИЕ УСЛОВИЯ, ПОКА ЧТО ВЫЛЕТАЕТ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def check_available_moves(self):
 
         # если кубики использованы, то ходить мы не можем
         if self.first_dice == -1000 and self.second_dice == -1000:
+            print('Dices are empty')
             return False
 
         for i in self.cells:
             # если текущее поле пустое - не смотрим
-            print(1)
             if len(i) == 0:
                 continue
 
-            print(2)
             # если текущее рассматриваемое поле вражеское - не смотрим
-            if self.player_color_now not in i[0].objectName:
+            if self.player_color_now not in i[0].objectName():
                 continue
 
-            print(3)
+            pos = self.on_desk(i)
             # если 1 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
             if self.first_dice != -1000:
-                print(4)
-                if len(self.cells[(i + self.first_dice) % 24]) != 0 and self.player_color_now not in self.cells[(i + self.first_dice) % 24][0].objectName():
+                if len(self.cells[(pos + self.first_dice) % 24]) != 0 and self.player_color_now not in self.cells[(pos + self.first_dice) % 24][0].objectName():
                     continue
 
-            print(6)
             # если 2 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
             if self.second_dice != -1000:
-                print(7)
-                if len(self.cells[(i + self.second_dice) % 24]) != 0 and self.player_color_now not in self.cells[(i + self.second_dice) % 24][0].objectName():
+                if len(self.cells[(pos + self.second_dice) % 24]) != 0 and self.player_color_now not in self.cells[(pos + self.second_dice) % 24][0].objectName():
                     continue
 
+            print('Can move')
             return True
+        print("Can't move")
         return False
 
-    def handle_player_move(self):
-        if self.success:
-            self.success = False
-            return True
-        else:
-            return False
+
 
     # меняем цвета ходящего игрока
     def change_player(self):
         self.player_color_now = 'white' if 'reddd' == self.player_color_now else 'reddd'
-        print('Color has changed')
+        print(f'Color has changed to {self.player_color_now}')
 
         # Уведомляем текущего игрока о необходимости бросить кубики
         self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
@@ -690,7 +664,6 @@ class Game(QtWidgets.QWidget):
         self.clearer()
         print('Helps are cleared')
         print('\n')
-        self.success = True
         # удаляем поочерёдно кубики, которыми ходим
         # если выпали одинаковые кубики
         if self.first_dice == self.second_dice and self.lbl_dice3 is not None:
