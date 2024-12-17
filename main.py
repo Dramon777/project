@@ -4,9 +4,9 @@ from random import randint
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QRadioButton
+from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QRadioButton, QPushButton
 
-my_sys_lang = 'Eng'
+game_sys_lang = 'Eng'
 game_mod = None
 wnd_menu = None
 wnd_error = None
@@ -14,6 +14,7 @@ wnd_of_rules = None
 text_rules = None
 wnd_of_playing = None
 wnd_of_choosing_dice_color = None
+wnd_win = None
 dice_color = ''
 dices_colors = {
     'white': {
@@ -85,8 +86,8 @@ def updater(self):
 # доп функция смены языка
 
 def switch_lang(language):
-    global my_sys_lang
-    my_sys_lang = language
+    global game_sys_lang
+    game_sys_lang = language
 
 
 # функция центрирования окна
@@ -141,7 +142,7 @@ def set_args(self, w, h):
 
 def error_of_game_mod(self1):
     global wnd_error
-    if my_sys_lang == 'Eng':
+    if game_sys_lang == 'Eng':
         wnd_error = Error('<b>Wrong game mod</b>')
     else:
         wnd_error = Error('<b>Ошибка игрового режима</b>')
@@ -152,7 +153,7 @@ def error_of_game_mod(self1):
 # функция отображения окна ошибка в связи с невыбранностью цвета кубиков
 def error_of_dice_color(self1):
     global wnd_error
-    if my_sys_lang == 'Eng':
+    if game_sys_lang == 'Eng':
         wnd_error = Error('<b>Wrong dice color</b>')
     else:
         wnd_error = Error('<b>Ошибка цвета кубиков</b>')
@@ -191,7 +192,7 @@ class Error(QtWidgets.QWidget):
 
         # вывод ошибки
 
-        if my_sys_lang == 'Eng':
+        if game_sys_lang == 'Eng':
             self.lbl.setText(f'<b>Error: {self.wrong}!</b>')
         else:
             self.lbl.setText(f'<b>Ошибка: {self.wrong}!</b>')
@@ -212,6 +213,39 @@ class Error(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
 
+class GameEnd(QtWidgets.QWidget):
+    def __init__(self, winner):
+        super().__init__()
+        self.txt_lbl = None
+        self.back_menu = None
+        self.winner = winner
+        self.setupUI()
+
+    def setupUI(self):
+        wnd_of_playing.hide()
+        set_args(self, 300, 100)
+
+        self.txt_lbl = QLabel(self)
+        if game_sys_lang == 'Рус':
+            self.txt_lbl.setText(f"{'Белые' if self.winner == 'white' else 'Красные'} одержали победу!!!")
+            self.back_menu = QPushButton('Вернуться в меню', self)
+        else:
+            self.txt_lbl.setText(f"{'White' if self.winner == 'white' else 'Red'} won!!!")
+            self.back_menu = QPushButton('Back to menu', self)
+
+        self.txt_lbl.setStyleSheet('font-size: 20px;')
+        self.txt_lbl.move(20 if game_sys_lang == 'Рус' else 95, 10)
+
+        self.back_menu.setStyleSheet('font-size: 20px;')
+        self.back_menu.move(85 if game_sys_lang == 'Eng' else 65, 50)
+        self.back_menu.clicked.connect(self.back)
+
+    def back(self):
+        global game_mod
+        game_mod = None
+        wnd_menu.show()
+        self.close()
+        wnd_of_playing.close()
 
 # окно игры
 
@@ -261,6 +295,7 @@ class Game(QtWidgets.QWidget):
         self.moving_player = None
         self.num_of_last_pushed_but = ''
         self.butplay = None
+        self.was = False
 
         self.success = False
         self.setupUI()
@@ -279,7 +314,7 @@ class Game(QtWidgets.QWidget):
         self.moving_player.setStyleSheet("font-size: 20px;")
         self.moving_player.setGeometry(1445, 600, 260, 30)
 
-        if my_sys_lang == 'Рус':
+        if game_sys_lang == 'Рус':
             # кнопка броска кубиков
             self.button_throw_dice = QtWidgets.QPushButton("Кинуть кубики", self)
 
@@ -309,6 +344,7 @@ class Game(QtWidgets.QWidget):
         self.but_size = QPixmap('red_chip.png').size()
         self.cells = []
         self.helper = [[], []]
+
         # начальная генерация фишек
         for i in range(1, 16):
             # создание и отображение красных фишек
@@ -325,17 +361,20 @@ class Game(QtWidgets.QWidget):
             self.helper[0].insert(0, chip1)
             self.helper[1].insert(0, chip2)
 
-            # внутренняя реализация игрового поля вида:
-            # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
-            # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
+        # внутренняя реализация игрового поля вида:
+        # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
+        # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
 
-            self.cells.append(self.helper[0])
-            self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
-            self.cells.append(self.helper[1])
-            self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+        self.cells.append(self.helper[0])
+        self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+        self.cells.append(self.helper[1])
+        self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
+
         # отчистка вспомогательного списка
         self.helper.clear()
-        self.butplay = QtWidgets.QPushButton('PLAY GAME' if my_sys_lang == 'Eng' else 'Начать игру', self)
+
+
+        self.butplay = QtWidgets.QPushButton('PLAY GAME' if game_sys_lang == 'Eng' else 'Начать игру', self)
         self.butplay.setStyleSheet("font-size: 35px;")
         self.butplay.setGeometry(QtCore.QRect(1441, 654, 258, 73))
         self.butplay.clicked.connect(self.play)
@@ -351,18 +390,19 @@ class Game(QtWidgets.QWidget):
 
     # игра 1 на 1
     def play_1vs1(self):
-        # Инициализация переменных для отслеживания текущего игрока
         self.player_color_now = 'reddd' if randint(1, 2) == 1 else 'white'
-        self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
+
+        if game_sys_lang == 'Рус':
+            self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
+        else:
+            self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, throw dices!")
 
         while True:
             # Проверяем, не закончилась ли игра
-            if self.is_game_end('reddd'):
-                print("Белые выиграли!")
-                break
-            elif self.is_game_end('white'):
-                print("Красные выиграли!")
-                break
+            if self.is_game_end(self.player_color_now):
+                global wnd_win
+                wnd_win = GameEnd(self.player_color_now)
+                wnd_win.show()
 
             # self.button_throw_dice.setEnabled(True)
 
@@ -373,7 +413,10 @@ class Game(QtWidgets.QWidget):
 
             # После броска кубиков начинаем ход
             self.button_throw_dice.setEnabled(False)
-            self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, ходите!")
+            if game_sys_lang == 'Рус':
+                self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, ходите!")
+            else:
+                self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, make move!")
 
             # Проверяем, есть ли доступные ходы
             available_moves = self.check_available_moves()
@@ -384,11 +427,11 @@ class Game(QtWidgets.QWidget):
                 self.button_throw_dice.setEnabled(True)
                 continue
 
-    # !!!!!!!!!!!!!ДОБАВИТЬ УСЛОВИЯ ПРО ВЫБРОС ФИШЕК И ПОФИКСИТЬ ТЕКУЩИЕ УСЛОВИЯ, ПОКА ЧТО ВЫЛЕТАЕТ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     def check_available_moves(self):
 
         # если кубики использованы, то ходить мы не можем
-        if self.first_dice == -1000 and self.second_dice == -1000:
+        if self.first_dice == -1000 == self.second_dice:
             print('Dices are empty')
             return False
 
@@ -401,23 +444,44 @@ class Game(QtWidgets.QWidget):
             if self.player_color_now not in i[0].objectName():
                 continue
 
-            pos = self.on_desk(i)
-            # если 1 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
+            pos = self.on_desk(i[0])
+
+            # если выбрасываем фишки текущего цвета
+            if self.player_color_now in i[0].objectName() and (self.fl_r and self.player_color_now == 'reddd') or (self.fl_w and self.player_color_now == 'white'):
+                pos = 6 - (pos % 6)
+                if self.first_dice == pos:
+                    return True
+                elif self.first_dice < pos:
+                    print('<')
+                    continue
+                else:
+                    print('>')
+                    if self.nothing_before(pos, i[0]):
+                        return True
+
+            # ХОДИМ
+            # если первый кубик не пустой
             if self.first_dice != -1000:
-                if len(self.cells[(pos + self.first_dice) % 24]) != 0 and self.player_color_now not in self.cells[(pos + self.first_dice) % 24][0].objectName():
-                    continue
+                # если целевая позиция пуста - ход есть
+                if len(self.cells[(pos + self.first_dice) % 24]) == 0:
+                    return True
 
-            # если 2 кубик не юзан и на целевой позиции вражеская фишка, то не ходим
+                # если на целевой позиции наша фишка - ход есть
+                if self.player_color_now in self.cells[(pos + self.first_dice) % 24][0].objectName():
+                    return True
+
+            # если второй кубик не пустой
             if self.second_dice != -1000:
-                if len(self.cells[(pos + self.second_dice) % 24]) != 0 and self.player_color_now not in self.cells[(pos + self.second_dice) % 24][0].objectName():
-                    continue
 
-            print('Can move')
-            return True
-        print("Can't move")
+                # если целевая позиция пуста - ход есть
+                if len(self.cells[(pos + self.second_dice) % 24]) == 0:
+                    return True
+
+                # если на целевой позиции наша фишка - ход есть
+                if self.player_color_now in self.cells[(pos + self.second_dice) % 24][0].objectName():
+                    return True
+
         return False
-
-
 
     # меняем цвета ходящего игрока
     def change_player(self):
@@ -434,9 +498,10 @@ class Game(QtWidgets.QWidget):
     # проверка на то, выиграл ли игрок с цветом <color>
     def is_game_end(self, color):
         for i in self.cells:
-            for j in i:
-                if color in j.objectName():
-                    return False
+            if len(i) == 0:
+                continue
+            if color in i[0].objectName():
+                return False
         return True
 
     # функция выхода в меню
@@ -647,7 +712,7 @@ class Game(QtWidgets.QWidget):
         else:
             a = self.cells[6:12]
         for i in range(0, pos % 6):
-            if len(a[i]) > 0:  # если есть фишка слева от позиции выбранной
+            if len(a[i]) > 0 and ('reddd' if 'reddd' in but1.objectName() else 'white') in a[i][0].objectName():  # если есть фишка слева от позиции выбранной И ЭТА ФИШКА НЕ ВРАЖЕСКАЯ
                 return False
         return True
 
@@ -674,15 +739,15 @@ class Game(QtWidgets.QWidget):
                 self.lbl_dice3.clear()
                 self.lbl_dice3 = None
         else:  # если кубики разные, или перестало выполняться условие для одинаковых кубиков
-            if dice == self.first_dice:
-                if self.lbl_dice1 is not None:
-                    self.lbl_dice1.clear()
-                    self.first_dice = -1000
-                    self.lbl_dice1 = None
-            elif self.lbl_dice2 is not None:
-                self.second_dice = -1000
-                self.lbl_dice2.clear()
-                self.lbl_dice2 = None
+            if dice == self.second_dice:
+                if self.lbl_dice2 is not None:
+                    self.lbl_dice2.clear()
+                    self.second_dice = -1000
+                    self.lbl_dice2 = None
+            elif self.lbl_dice1 is not None:
+                self.lbl_dice1.clear()
+                self.first_dice = -1000
+                self.lbl_dice1 = None
 
     # номер лунки, в которой находится текущая фишка
     def on_desk(self, but):
@@ -739,7 +804,7 @@ class ChooseDiceColor(QtWidgets.QWidget):
         set_args(self, 315, 250)
         self.lbl = QLabel(self)
 
-        if my_sys_lang == 'Eng':
+        if game_sys_lang == 'Eng':
 
             # надпись выбрать цвет кубиков
             self.lbl.setText("<b>Choose dice color</b>")
@@ -838,7 +903,7 @@ class ChooseGameMode(QtWidgets.QWidget):
         set_args(self, 290, 150)
         self.lbl = QLabel(self)
 
-        if my_sys_lang == 'Eng':
+        if game_sys_lang == 'Eng':
 
             # надпись выбрать режим игры
             self.lbl.setText("<b>Choose your enemy</b>")
@@ -931,7 +996,7 @@ class Exit(QtWidgets.QWidget):
         set_args(self, 250, 100)
         self.lbl = QLabel(self)
 
-        if my_sys_lang == "Рус":
+        if game_sys_lang == "Рус":
             # надпись "Вы точно хотите выйти?"
             self.lbl.setText('<b>Вы точно хотите выйти?</b>')
             self.lbl.move(40, 5)
@@ -1007,7 +1072,7 @@ class Rules(QtWidgets.QWidget):
 
         # язык кнопки + язык правил игры
 
-        if my_sys_lang == 'Рус':
+        if game_sys_lang == 'Рус':
             file = codecs.open('RULES_ru.txt', 'r', 'utf_8')
             text_rules = file.read()
             file.close()
@@ -1070,7 +1135,7 @@ class Rules(QtWidgets.QWidget):
 
 class Menu(QtWidgets.QWidget):
     def __init__(self):
-        global my_sys_lang
+        global game_sys_lang
         super().__init__()
         self.wnd_of_exit = None
         self.change_lang = None
@@ -1090,7 +1155,7 @@ class Menu(QtWidgets.QWidget):
         self.lbl1 = QLabel(self)
         self.lbl2 = QLabel(self)
 
-        if my_sys_lang == 'Eng':
+        if game_sys_lang == 'Eng':
 
             # надпись названия игры
             self.lbl1.setText('<b>Long backgammon</b>')
@@ -1165,7 +1230,7 @@ class Menu(QtWidgets.QWidget):
     # измение языка игры
 
     def lang(self):
-        if my_sys_lang == 'Eng':
+        if game_sys_lang == 'Eng':
             switch_lang("Рус")
         else:
             switch_lang("Eng")
@@ -1181,7 +1246,7 @@ class Menu(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    my_sys_lang = 'Eng'
+    game_sys_lang = 'Eng'
     app = QtWidgets.QApplication(sys.argv)
     wnd_menu = Menu()
     wnd_menu.show()
