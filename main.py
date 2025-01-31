@@ -4,7 +4,7 @@ from random import randint
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QRadioButton, QPushButton
+from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QPushButton
 
 game_sys_lang = 'Eng'
 game_mod = None
@@ -310,11 +310,13 @@ class Game(QtWidgets.QWidget):
         self.bg_lbl.move(0, 0)
 
         self.moving_player = QLabel(self)
-        self.moving_player.setText('Бросьте кубики')
         self.moving_player.setStyleSheet("font-size: 20px;")
         self.moving_player.setGeometry(1445, 600, 260, 30)
 
         if game_sys_lang == 'Рус':
+            # текст, уведомляющий игрока(-ов) о том, чтобы бросить кубики
+            self.moving_player.setText('Бросьте кубики')
+
             # кнопка броска кубиков
             self.button_throw_dice = QtWidgets.QPushButton("Кинуть кубики", self)
 
@@ -322,6 +324,9 @@ class Game(QtWidgets.QWidget):
             self.button_back = QtWidgets.QPushButton("Выход", self)
 
         else:
+            # текст, уведомляющий игрока(-ов) о том, чтобы бросить кубики
+            self.moving_player.setText('Throw the dice')
+
             # кнопка броска кубиков
             self.button_throw_dice = QtWidgets.QPushButton("Throw the dice", self)
 
