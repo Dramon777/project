@@ -5,12 +5,6 @@ from random import randint
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QPushButton
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-import os
-from collections import deque
 
 game_sys_lang = 'Eng'
 game_mod = None
@@ -21,7 +15,6 @@ text_rules = None
 wnd_of_playing = None
 wnd_of_choosing_dice_color = None
 wnd_win = None
-dice_value = None
 dice_color = ''
 dices_colors = {
     'white': {
@@ -70,134 +63,6 @@ triangles = {
     22: [280, 35],
     23: [190, 35]
 }
-
-
-# Нейронная сеть
-class BackgammonNN(nn.Module):
-    def __init__(self):
-        super(BackgammonNN, self).__init__()
-        self.fc1 = nn.Linear(24 * 2, 128)  # 24 позиции на поле, 2 игрока
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 24 * 2)  # 24 позиции * 2 кубика
-
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x.view(-1, 24, 2)  # Формат: [batch_size, 24 позиции, 2 кубика]
-
-
-# Инициализация нейронной сети
-model = BackgammonNN()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-criterion = nn.MSELoss()
-
-# Очередь для хранения данных (состояния и ходы)
-training_data = deque(maxlen=10000)  # Ограничим размер очереди
-
-
-# Функция для преобразования состояния игрового поля в вектор
-def state_to_vector(cells):
-    vector = np.zeros(24 * 2)
-    for i, cell in enumerate(cells):
-        if len(cell) > 0:
-            if 'reddd' in cell[0].objectName():
-                vector[i] = len(cell)
-            else:
-                vector[i + 24] = len(cell)
-    return torch.FloatTensor(vector)
-
-
-# Функция для выбора хода с помощью нейронной сети
-def choose_move_with_nn(cells, player_color, first_dice, second_dice):
-    state_vector = state_to_vector(cells)
-    model.eval()
-    with torch.no_grad():
-        output = model(state_vector.unsqueeze(0))  # Добавляем batch dimension
-    output = output.squeeze(0).numpy()  # Убираем batch dimension
-
-    # Выбираем ходы для текущего игрока
-    if player_color == 'reddd':
-        possible_moves = output[:24]  # Ходы для красных
-    else:
-        possible_moves = output[24:]  # Ходы для белых
-
-    # Проверяем, есть ли допустимые ходы
-    if np.all(possible_moves == 0):
-        print("No valid moves found by the neural network. Using random move.")
-        return generate_random_move(cells, player_color, first_dice, second_dice)
-
-    # Выбираем ход с максимальной оценкой
-    move_index = np.argmax(possible_moves)
-    current_position = move_index // 2  # Текущая позиция фишки
-    dice_index = move_index % 2  # Индекс кубика (0 или 1)
-
-    # Получаем значение кубика
-    dice_value = first_dice if dice_index == 0 else second_dice
-
-    return [current_position, dice_value]
-
-
-# Генерация случайного хода
-def generate_random_move(cells, player_color, first_dice, second_dice):
-    valid_moves = []
-    for i, cell in enumerate(cells):
-        if len(cell) > 0 and player_color in cell[0].objectName():
-            if first_dice != -1000:
-                target_pos = (i + first_dice) % 24
-                if len(cells[target_pos]) == 0 or player_color in cells[target_pos][0].objectName():
-                    valid_moves.append([i, first_dice])
-            if second_dice != -1000:
-                target_pos = (i + second_dice) % 24
-                if len(cells[target_pos]) == 0 or player_color in cells[target_pos][0].objectName():
-                    valid_moves.append([i, second_dice])
-
-    if len(valid_moves) == 0:
-        return None
-    return valid_moves[randint(0, len(valid_moves) - 1)]
-
-
-# Функция для сохранения данных (состояние и ход)
-def save_training_data(state, move):
-    training_data.append((state, move))
-
-
-# Функция для обучения модели
-def train_model():
-    if len(training_data) < 100:  # Обучаем, если накопилось достаточно данных
-        return
-
-    # Преобразуем данные в тензоры
-    states = torch.stack([data[0] for data in training_data])
-    moves = torch.FloatTensor([data[1] for data in training_data])
-
-    # Обучаем модель
-    model.train()
-    optimizer.zero_grad()
-    outputs = model(states)
-    loss = criterion(outputs, moves)
-    loss.backward()
-    optimizer.step()
-
-    print(f"Model trained. Loss: {loss.item()}")
-
-    # Очищаем данные после обучения
-    training_data.clear()
-
-
-# Функция для сохранения модели
-def save_model(filename="backgammon_model.pth"):
-    torch.save(model.state_dict(), filename)
-    print(f"Model saved to {filename}")
-
-
-# Функция для загрузки модели
-def load_model(filename="backgammon_model.pth"):
-    if os.path.exists(filename):
-        model.load_state_dict(torch.load(filename))
-        print(f"Model loaded from {filename}")
-    else:
-        print("No saved model found. Starting from scratch.")
 
 
 # правила
@@ -348,7 +213,6 @@ class Error(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
 
-
 class GameEnd(QtWidgets.QWidget):
     def __init__(self, winner):
         super().__init__()
@@ -383,8 +247,139 @@ class GameEnd(QtWidgets.QWidget):
         self.close()
         wnd_of_playing.close()
 
-
 # окно игры
+
+class DecisionTree:
+    def __init__(self, depth):
+        self.depth = depth  # Глубина просчёта ходов
+
+    def evaluate_board(self, game):
+        """
+        Оценка текущего состояния доски.
+        Чем выше значение, тем лучше для бота.
+        """
+        score = 0
+        for i, cell in enumerate(game.cells):
+            if cell and 'white' in cell[0].objectName():  # Фишки бота (белые)
+                score += len(cell) * (24 - i)  # Чем ближе к выходу, тем лучше
+            elif cell and 'reddd' in cell[0].objectName():  # Фишки игрока (красные)
+                score -= len(cell) * (i + 1)  # Чем дальше от выхода, тем лучше
+        return score
+
+    def minimax(self, game, depth, alpha, beta, maximizing_player):
+        """
+        Алгоритм Minimax с альфа-бета отсечением.
+        """
+        if depth == 0 or game.is_game_end('white') or game.is_game_end('reddd'):
+            return self.evaluate_board(game)
+
+        if maximizing_player:  # Ход бота (максимизация)
+            max_eval = -float('inf')
+            for move in self.get_all_possible_moves(game, 'white'):
+                # Симулируем ход
+                game.make_move(move[0], move[1])
+                eval = self.minimax(game, depth - 1, alpha, beta, False)
+                game.undo_move(move[0], move[1])  # Отменяем ход
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break  # Альфа-бета отсечение
+            return max_eval
+        else:  # Ход игрока (минимизация)
+            min_eval = float('inf')
+            for move in self.get_all_possible_moves(game, 'reddd'):
+                # Симулируем ход
+                game.make_move(move[0], move[1])
+                eval = self.minimax(game, depth - 1, alpha, beta, True)
+                game.undo_move(move[0], move[1])  # Отменяем ход
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break  # Альфа-бета отсечение
+            return min_eval
+
+    def get_best_move(self, game):
+        """
+        Возвращает лучший ход для бота на основе Minimax.
+        """
+        best_move = None
+        max_eval = -float('inf')
+        for move in self.get_all_possible_moves(game, 'white'):
+            # Симулируем ход
+            game.make_move(move[0], move[1])
+            eval = self.minimax(game, self.depth - 1, -float('inf'), float('inf'), False)
+            game.undo_move(move[0], move[1])  # Отменяем ход
+            if eval > max_eval:
+                max_eval = eval
+                best_move = move
+        return best_move
+
+    def get_all_possible_moves(self, game, color):
+        """
+        Возвращает все возможные ходы для текущего игрока.
+        """
+        moves = []
+        for src in range(24):
+            if not game.cells[src]: continue
+            if color not in game.cells[src][0].objectName(): continue
+
+            for dice in [game.first_dice, game.second_dice]:
+                if dice == -1000: continue
+
+                dst = src + dice if color == 'reddd' else src - dice
+                if game.is_move_valid(src, dst, color):
+                    moves.append((src, dst))
+        return moves
+
+class ChooseDifficulty(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.lbl = None
+        self.easy = None
+        self.medium = None
+        self.hard = None
+        self.ok = None
+        self.setupUI()
+
+    def setupUI(self):
+        self.setObjectName("choosing_difficulty")
+        set_args(self, 300, 200)
+        self.lbl = QLabel(self)
+
+        if game_sys_lang == 'Eng':
+            self.lbl.setText("<b>Choose difficulty</b>")
+            self.lbl.move(80, 10)
+
+            self.easy = QtWidgets.QRadioButton("Easy (Depth 1)", self)
+            self.medium = QtWidgets.QRadioButton("Medium (Depth 2)", self)
+            self.hard = QtWidgets.QRadioButton("Hard (Depth 3)", self)
+            self.ok = QtWidgets.QPushButton("OK", self)
+        else:
+            self.lbl.setText("<b>Выберите сложность</b>")
+            self.lbl.move(60, 10)
+
+            self.easy = QtWidgets.QRadioButton("Легко (Глубина 1)", self)
+            self.medium = QtWidgets.QRadioButton("Средне (Глубина 2)", self)
+            self.hard = QtWidgets.QRadioButton("Сложно (Глубина 3)", self)
+            self.ok = QtWidgets.QPushButton("ОК", self)
+
+        self.easy.setGeometry(20, 50, 260, 30)
+        self.medium.setGeometry(20, 90, 260, 30)
+        self.hard.setGeometry(20, 130, 260, 30)
+        self.ok.setGeometry(100, 170, 100, 30)
+
+        self.ok.clicked.connect(self.set_difficulty)
+
+    def set_difficulty(self):
+        global wnd_of_playing
+        if self.easy.isChecked():
+            wnd_of_playing.set_difficulty(1)
+        elif self.medium.isChecked():
+            wnd_of_playing.set_difficulty(2)
+        elif self.hard.isChecked():
+            wnd_of_playing.set_difficulty(3)
+
+        self.close()
 
 class Game(QtWidgets.QWidget):
     def __init__(self):
@@ -435,6 +430,8 @@ class Game(QtWidgets.QWidget):
         self.was = False
 
         self.success = False
+        self.difficulty = 2  # Глубина просчёта ходов по умолчанию
+        self.decision_tree = DecisionTree(self.difficulty)
         self.setupUI()
 
     def setupUI(self):
@@ -515,6 +512,7 @@ class Game(QtWidgets.QWidget):
         # отчистка вспомогательного списка
         self.helper.clear()
 
+
         self.butplay = QtWidgets.QPushButton('PLAY GAME' if game_sys_lang == 'Eng' else 'Начать игру', self)
         self.butplay.setStyleSheet("font-size: 35px;")
         self.butplay.setGeometry(QtCore.QRect(1441, 654, 258, 73))
@@ -527,6 +525,7 @@ class Game(QtWidgets.QWidget):
             self.play_1vs1()
         else:
             self.play_vs_bot()
+
 
     # игра 1 на 1
     def play_1vs1(self):
@@ -567,42 +566,58 @@ class Game(QtWidgets.QWidget):
                 self.button_throw_dice.setEnabled(True)
                 continue
 
+
     def check_available_moves(self):
-        if self.first_dice == -1000 and self.second_dice == -1000:
+
+        # если кубики использованы, то ходить мы не можем
+        if self.first_dice == -1000 == self.second_dice:
             print('Dices are empty')
             return False
 
-        for i, cell in enumerate(self.cells):
-            if len(cell) == 0:
+        for i in self.cells:
+            # если текущее поле пустое - не смотрим
+            if len(i) == 0:
                 continue
 
-            if self.player_color_now not in cell[0].objectName():
+            # если текущее рассматриваемое поле вражеское - не смотрим
+            if self.player_color_now not in i[0].objectName():
                 continue
 
-            pos = self.on_desk(cell[0])
+            pos = self.on_desk(i[0])
 
-            # Проверка на возможность выбрасывания фишек
-            if (self.player_color_now in cell[0].objectName() and
-                    (self.fl_r and self.player_color_now == 'reddd') or
-                    (self.fl_w and self.player_color_now == 'white')):
+            # если выбрасываем фишки текущего цвета
+            if self.player_color_now in i[0].objectName() and (self.fl_r and self.player_color_now == 'reddd') or (self.fl_w and self.player_color_now == 'white'):
                 pos = 6 - (pos % 6)
                 if self.first_dice == pos:
                     return True
                 elif self.first_dice < pos:
+                    print('<')
                     continue
                 else:
-                    if self.nothing_before(pos, cell[0]):
+                    print('>')
+                    if self.nothing_before(pos, i[0]):
                         return True
 
-            # Проверка на возможность обычного хода
+            # ХОДИМ
+            # если первый кубик не пустой
             if self.first_dice != -1000:
-                target_pos = (pos + self.first_dice) % 24
-                if len(self.cells[target_pos]) == 0 or self.player_color_now in self.cells[target_pos][0].objectName():
+                # если целевая позиция пуста - ход есть
+                if len(self.cells[(pos + self.first_dice) % 24]) == 0:
                     return True
 
+                # если на целевой позиции наша фишка - ход есть
+                if self.player_color_now in self.cells[(pos + self.first_dice) % 24][0].objectName():
+                    return True
+
+            # если второй кубик не пустой
             if self.second_dice != -1000:
-                target_pos = (pos + self.second_dice) % 24
-                if len(self.cells[target_pos]) == 0 or self.player_color_now in self.cells[target_pos][0].objectName():
+
+                # если целевая позиция пуста - ход есть
+                if len(self.cells[(pos + self.second_dice) % 24]) == 0:
+                    return True
+
+                # если на целевой позиции наша фишка - ход есть
+                if self.player_color_now in self.cells[(pos + self.second_dice) % 24][0].objectName():
                     return True
 
         return False
@@ -615,82 +630,76 @@ class Game(QtWidgets.QWidget):
         # Уведомляем текущего игрока о необходимости бросить кубики
         self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
 
-    # Игра против бота
+    # игра против бота
+
     def play_vs_bot(self):
-        while True:
-            # Проверяем, не закончилась ли игра
-            if self.is_game_end(self.player_color_now):
-                global wnd_win
-                wnd_win = GameEnd(self.player_color_now)
-                wnd_win.show()
-                break
+        """
+        Режим игры против бота.
+        """
+        self.player_color_now = 'reddd'  # Игрок всегда красные
+        self.bot_color = 'white'
 
-            # Ожидание броска кубиков
-            QtWidgets.QApplication.processEvents()
-            while self.button_throw_dice.isEnabled():
-                QtWidgets.QApplication.processEvents()
+        if game_sys_lang == 'Рус':
+            self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, бросьте кубики!")
+        else:
+            self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, throw the dice!")
 
-            # После броска кубиков начинаем ход
-            self.button_throw_dice.setEnabled(False)
-            if game_sys_lang == 'Рус':
-                self.moving_player.setText(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'}, ходите!")
-            else:
-                self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, make move!")
+        self.button_throw_dice.clicked.connect(self.handle_dice_throw)
 
-            # Если ходит бот
-            if self.player_color_now == 'white':
-                move = choose_move_with_nn(self.cells, self.player_color_now, self.first_dice, self.second_dice)
-                if move is None:
-                    print("Bot cannot make a move. Skipping turn.")
-                    self.change_player()
-                    self.first_dice = self.second_dice = -1000
-                    self.button_throw_dice.setEnabled(True)
-                    continue
+    def handle_dice_throw(self):
+        """
+        Обрабатывает бросок кубиков и переключает ход.
+        """
+        if self.bot_thinking: return  # Предотвращаем конфликты
 
-                self.make_move(move)
-            else:
-                # Ожидание хода игрока
-                QtWidgets.QApplication.processEvents()
-                while self.button_throw_dice.isEnabled():
-                    QtWidgets.QApplication.processEvents()
+        # Бросок кубиков
+        self.throwed()
 
-            # Проверяем, есть ли доступные ходы
-            available_moves = self.check_available_moves()
-            if not available_moves:
-                print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
-                self.change_player()
-                self.first_dice = self.second_dice = -1000
-                self.button_throw_dice.setEnabled(True)
-                continue
+        # Переключаем ход
+        self.change_player()
 
-        def make_move(self, move):
-            if move is None:
-                print("Invalid move. Skipping.")
-                return
+    def bot_make_move(self):
+        """
+        Ход бота с использованием дерева принятия решений.
+        """
+        self.bot_thinking = True
 
-            current_position, dice_value = move
+        # Получаем лучший ход от дерева принятия решений
+        best_move = self.decision_tree.get_best_move(self)
 
-            # Проверяем, что текущая позиция и кубик допустимы
-            if current_position < 0 or current_position >= 24:
-                print(f"Invalid current position: {current_position}")
-                return
+        if best_move:
+            self.execute_bot_move(best_move)
 
-            if dice_value not in [self.first_dice, self.second_dice]:
-                print(f"Invalid dice value: {dice_value}")
-                return
+        self.bot_thinking = False
+        self.change_player()
 
-            # Вычисляем целевую позицию
-            target_position = (current_position + dice_value) % 24
+    def execute_bot_move(self, move):
+        """
+        Выполняет ход бота.
+        """
+        src, dst = move
+        chip = self.cells[src][0]
 
-            # Проверяем, можно ли сделать ход на целевую позицию
-            target_cell = self.cells[target_position]
-            if len(target_cell) > 1 and self.player_color_now not in target_cell[0].objectName():
-                print("Cannot move to this position: enemy has more than one chip.")
-                return
+        # Если на целевой позиции стоит одна фишка противника, выбиваем её
+        if len(self.cells[dst]) == 1:
+            enemy_chip = self.cells[dst][0]
+            enemy_color = 'reddd' if 'reddd' in enemy_chip.objectName() else 'white'
+            if enemy_color != self.bot_color:
+                self.cells[dst].remove(enemy_chip)
+                enemy_chip.deleteLater()
 
-            # Перемещаем фишку
-            self.make_move(move)
-            print(f"Moved chip from position {current_position} to position {target_position} using dice {dice_value}")
+        # Перемещаем фишку
+        self.cells[src].remove(chip)
+        self.cells[dst].append(chip)
+        chip.move(triangles[dst][0], triangles[dst][1])
+
+        # Обновление кубиков
+        if abs(dst - src) == self.first_dice:
+            self.first_dice = -1000
+        else:
+            self.second_dice = -1000
+
+        self.update_dice_display()
 
     # проверка на то, выиграл ли игрок с цветом <color>
     def is_game_end(self, color):
@@ -708,7 +717,6 @@ class Game(QtWidgets.QWidget):
 
     # функция броска кубиков
     def throwed(self):
-        global dice_value
         self.button_throw_dice.setEnabled(False)
         if not self.lbl_dice1 is None:
             self.lbl_dice1.clear()
@@ -812,6 +820,7 @@ class Game(QtWidgets.QWidget):
             self.clearer()
         print('Helps are cleared')
 
+
         cnt = 0
         for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
             cnt += len(self.cells[i])
@@ -909,8 +918,7 @@ class Game(QtWidgets.QWidget):
         else:
             a = self.cells[6:12]
         for i in range(0, pos % 6):
-            if len(a[i]) > 0 and ('reddd' if 'reddd' in but1.objectName() else 'white') in a[i][
-                0].objectName():  # если есть фишка слева от позиции выбранной И ЭТА ФИШКА НЕ ВРАЖЕСКАЯ
+            if len(a[i]) > 0 and ('reddd' if 'reddd' in but1.objectName() else 'white') in a[i][0].objectName():  # если есть фишка слева от позиции выбранной И ЭТА ФИШКА НЕ ВРАЖЕСКАЯ
                 return False
         return True
 
@@ -982,13 +990,6 @@ class Game(QtWidgets.QWidget):
         self.cells[pos][0].deleteLater()
         del self.cells[pos][0]
         self.clearer()
-
-    def make_move(self, move):
-        if move is None:
-            print("Invalid move. Skipping.")
-            return
-        self.mover(move[0], move[1], self.cells[move[0]][0])
-        print("Chip moved")
 
 
 # окно выбора цвета кубиков
@@ -1449,9 +1450,6 @@ class Menu(QtWidgets.QWidget):
         self.wnd_choose_game_mode = ChooseGameMode()
         self.wnd_choose_game_mode.show()
 
-
-# Загрузка модели при запуске
-load_model()
 
 if __name__ == '__main__':
     game_sys_lang = 'Eng'
