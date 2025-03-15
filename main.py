@@ -15,6 +15,8 @@ text_rules = None
 wnd_of_playing = None
 wnd_of_choosing_dice_color = None
 wnd_win = None
+wnd_of_difficulty = None
+diff = None
 dice_color = ''
 dices_colors = {
     'white': {
@@ -213,6 +215,7 @@ class Error(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
 
+
 class GameEnd(QtWidgets.QWidget):
     def __init__(self, winner):
         super().__init__()
@@ -246,6 +249,7 @@ class GameEnd(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
         wnd_of_playing.close()
+
 
 # окно игры
 
@@ -331,59 +335,108 @@ class DecisionTree:
                     moves.append((src, dst))
         return moves
 
-class ChooseDifficulty(QtWidgets.QWidget):
+# окно выбора сложности при игре против бота
+class SetDifficulty(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.easy_diff = None
+        self.medium_diff = None
+        self.hard_diff = None
         self.lbl = None
-        self.easy = None
-        self.medium = None
-        self.hard = None
+        self.back_menu = None
         self.ok = None
-        self.setupUI()
 
+        self.setupUI()
     def setupUI(self):
-        self.setObjectName("choosing_difficulty")
-        set_args(self, 300, 200)
+
+        # настройка окна
+        set_args(self, 315, 250)
         self.lbl = QLabel(self)
 
-        if game_sys_lang == 'Eng':
-            self.lbl.setText("<b>Choose difficulty</b>")
-            self.lbl.move(80, 10)
-
-            self.easy = QtWidgets.QRadioButton("Easy (Depth 1)", self)
-            self.medium = QtWidgets.QRadioButton("Medium (Depth 2)", self)
-            self.hard = QtWidgets.QRadioButton("Hard (Depth 3)", self)
-            self.ok = QtWidgets.QPushButton("OK", self)
+        # настройка языка окна в соответствии с языком игры
+        if game_sys_lang == 'Рус':
+            self.easy_diff = QtWidgets.QRadioButton('Легкая', self)
+            self.medium_diff = QtWidgets.QRadioButton('Средняя', self)
+            self.hard_diff = QtWidgets.QRadioButton('Сложная', self)
+            self.lbl.setText('Выберите сложность:')
+            self.back_menu = QPushButton('Вернуться в меню', self)
         else:
-            self.lbl.setText("<b>Выберите сложность</b>")
-            self.lbl.move(60, 10)
+            self.easy_diff = QtWidgets.QRadioButton('Easy', self)
+            self.medium_diff = QtWidgets.QRadioButton('Medium', self)
+            self.hard_diff = QtWidgets.QRadioButton('Hard', self)
+            self.lbl.setText('Choose difficulty:')
+            self.back_menu = QPushButton('Back menu', self)
 
-            self.easy = QtWidgets.QRadioButton("Легко (Глубина 1)", self)
-            self.medium = QtWidgets.QRadioButton("Средне (Глубина 2)", self)
-            self.hard = QtWidgets.QRadioButton("Сложно (Глубина 3)", self)
-            self.ok = QtWidgets.QPushButton("ОК", self)
+        # установка размеров шрифта
+        self.easy_diff.setStyleSheet("font-size: 18px;")
+        self.medium_diff.setStyleSheet("font-size: 18px;")
+        self.hard_diff.setStyleSheet("font-size: 18px;")
+        self.lbl.setStyleSheet("font-size: 18px")
 
-        self.easy.setGeometry(20, 50, 260, 30)
-        self.medium.setGeometry(20, 90, 260, 30)
-        self.hard.setGeometry(20, 130, 260, 30)
-        self.ok.setGeometry(100, 170, 100, 30)
 
-        self.ok.clicked.connect(self.set_difficulty)
+        # двигаем все элементы интерфейса
+        self.lbl.move(70, 5)
+        self.easy_diff.setGeometry(QtCore.QRect(15, 45, 120, 45))
+        self.medium_diff.setGeometry(QtCore.QRect(15, 90, 120, 45))
+        self.hard_diff.setGeometry(QtCore.QRect(15, 135, 120, 45))
 
-    def set_difficulty(self):
-        global wnd_of_playing
-        if self.easy.isChecked():
-            wnd_of_playing.set_difficulty(1)
-        elif self.medium.isChecked():
-            wnd_of_playing.set_difficulty(2)
-        elif self.hard.isChecked():
-            wnd_of_playing.set_difficulty(3)
+        # настройка кнопок выбора сложности
+        self.easy_diff.clicked.connect(self.set_easy)
+        self.medium_diff.clicked.connect(self.set_medium)
+        self.hard_diff.clicked.connect(self.set_hard)
 
+        # настройка кнопки возврата в меню
+        self.back_menu.setStyleSheet("font-size: 18px;")
+        self.back_menu.setGeometry(QtCore.QRect(130, 190, 160, 45))
+        self.back_menu.clicked.connect(self.back_to_main_menu)
+
+        # настройка кнопки продолжения(перехода в игру)
+        self.ok = QPushButton('OK', self)
+        self.ok.setGeometry(QtCore.QRect(15, 190, 100, 45))
+        self.ok.clicked.connect(self.oked)
+
+    # функция перехода в игру
+    def oked(self):
+        global dice_color, wnd_of_playing
+        if dice_color != '':
+            wnd_of_playing = Game()
+            wnd_of_playing.show()
+            self.close()
+        else:
+            error_of_dice_color(self)
+
+    # функция возврата в меню
+    def back_to_main_menu(self):
+        global wnd_menu
+        wnd_menu.show()
         self.close()
+
+    # присваивание глобальнрому режиму сложности легкий уровень
+    def set_easy(self):
+        global diff
+        diff = 3
+        print("EasyMod")
+
+    # присваивание глобальнрому режиму сложности средний уровень
+    def set_medium(self):
+        global diff
+        diff = 5
+        print("MediumMod")
+
+    # присваивание глобальнрому режиму сложности сложный уровень
+    def set_hard(self):
+        global diff
+        diff = 7
+        print("HardMod")
+
+
 
 class Game(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.bot_thinking = None
+        global diff
+        self.bot_color = None
         self.bg_lbl = None
         self.bg_pixmap = None
         self.button_back = None
@@ -426,12 +479,11 @@ class Game(QtWidgets.QWidget):
         self.player_color_now = ''
         self.moving_player = None
         self.num_of_last_pushed_but = ''
-        self.butplay = None
+        self.but_play = None
         self.was = False
 
         self.success = False
-        self.difficulty = 2  # Глубина просчёта ходов по умолчанию
-        self.decision_tree = DecisionTree(self.difficulty)
+        self.decision_tree = None
         self.setupUI()
 
     def setupUI(self):
@@ -512,20 +564,18 @@ class Game(QtWidgets.QWidget):
         # отчистка вспомогательного списка
         self.helper.clear()
 
-
-        self.butplay = QtWidgets.QPushButton('PLAY GAME' if game_sys_lang == 'Eng' else 'Начать игру', self)
-        self.butplay.setStyleSheet("font-size: 35px;")
-        self.butplay.setGeometry(QtCore.QRect(1441, 654, 258, 73))
-        self.butplay.clicked.connect(self.play)
+        self.but_play = QtWidgets.QPushButton('PLAY GAME' if game_sys_lang == 'Eng' else 'Начать игру', self)
+        self.but_play.setStyleSheet("font-size: 35px;")
+        self.but_play.setGeometry(QtCore.QRect(1441, 654, 258, 73))
+        self.but_play.clicked.connect(self.play)
 
     def play(self):
-        self.butplay.hide()
+        self.but_play.hide()
         global game_mod
         if game_mod == '1vs1':
             self.play_1vs1()
         else:
             self.play_vs_bot()
-
 
     # игра 1 на 1
     def play_1vs1(self):
@@ -542,8 +592,6 @@ class Game(QtWidgets.QWidget):
                 global wnd_win
                 wnd_win = GameEnd(self.player_color_now)
                 wnd_win.show()
-
-            # self.button_throw_dice.setEnabled(True)
 
             # Ожидание броска кубиков
             QtWidgets.QApplication.processEvents()  # Позволяем интерфейсу обновляться
@@ -566,7 +614,6 @@ class Game(QtWidgets.QWidget):
                 self.button_throw_dice.setEnabled(True)
                 continue
 
-
     def check_available_moves(self):
 
         # если кубики использованы, то ходить мы не можем
@@ -586,7 +633,8 @@ class Game(QtWidgets.QWidget):
             pos = self.on_desk(i[0])
 
             # если выбрасываем фишки текущего цвета
-            if self.player_color_now in i[0].objectName() and (self.fl_r and self.player_color_now == 'reddd') or (self.fl_w and self.player_color_now == 'white'):
+            if self.player_color_now in i[0].objectName() and (self.fl_r and self.player_color_now == 'reddd') or (
+                    self.fl_w and self.player_color_now == 'white'):
                 pos = 6 - (pos % 6)
                 if self.first_dice == pos:
                     return True
@@ -636,6 +684,7 @@ class Game(QtWidgets.QWidget):
         """
         Режим игры против бота.
         """
+        self.decision_tree = DecisionTree(diff)
         self.player_color_now = 'reddd'  # Игрок всегда красные
         self.bot_color = 'white'
 
@@ -644,20 +693,56 @@ class Game(QtWidgets.QWidget):
         else:
             self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, throw the dice!")
 
-        self.button_throw_dice.clicked.connect(self.handle_dice_throw)
+        while True:
+            if self.is_game_end(self.player_color_now):
+                global wnd_win
+                wnd_win = GameEnd(self.player_color_now)
+                wnd_win.show()
 
-    def handle_dice_throw(self):
-        """
-        Обрабатывает бросок кубиков и переключает ход.
-        """
-        if self.bot_thinking: return  # Предотвращаем конфликты
+            if self.player_color_now == 'reddd':
+                self.button_throw_dice.setEnabled(True)
 
-        # Бросок кубиков
-        self.throwed()
+                # Ожидание броска кубиков
+                QtWidgets.QApplication.processEvents()  # Позволяем интерфейсу обновляться
+                while self.button_throw_dice.isEnabled():
+                    QtWidgets.QApplication.processEvents()
 
-        # Переключаем ход
-        self.change_player()
+                # После броска кубиков начинаем ход
+                self.button_throw_dice.setEnabled(False)
+                if game_sys_lang == 'Рус':
+                    self.moving_player.setText(f"Игрок, ходите!")
+                else:
+                    self.moving_player.setText(f"Player, make move!")
 
+                # Проверяем, есть ли доступные ходы
+                available_moves = self.check_available_moves()
+                if not available_moves:
+                    print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
+                    self.change_player()
+                    self.first_dice = self.second_dice = -1000
+                    continue
+                self.change_player()
+            else:
+                if game_sys_lang == 'Рус':
+                    self.moving_player.setText(f"Бот сделал ход!")
+                else:
+                    self.moving_player.setText(f"Bot made move!")
+
+                #бот бросает кубики
+                self.throwed()
+
+                # Проверяем, есть ли доступные ходы
+                available_moves = self.check_available_moves()
+                if not available_moves:
+                    print(f"{'Красные' if self.player_color_now == 'reddd' else 'Белые'} не могут сделать ход.")
+                    self.change_player()
+                    self.first_dice = self.second_dice = -1000
+                    continue
+
+                while self.first_dice != -1000 and self.second_dice != -1000:
+                    self.bot_make_move()
+
+    # вспомогательная функция хода
     def bot_make_move(self):
         """
         Ход бота с использованием дерева принятия решений.
@@ -673,33 +758,14 @@ class Game(QtWidgets.QWidget):
         self.bot_thinking = False
         self.change_player()
 
+    # реализация хода бота
     def execute_bot_move(self, move):
         """
         Выполняет ход бота.
         """
-        src, dst = move
+        src, dst = move # текущая позиция фишки, целевая позиция фишки
         chip = self.cells[src][0]
-
-        # Если на целевой позиции стоит одна фишка противника, выбиваем её
-        if len(self.cells[dst]) == 1:
-            enemy_chip = self.cells[dst][0]
-            enemy_color = 'reddd' if 'reddd' in enemy_chip.objectName() else 'white'
-            if enemy_color != self.bot_color:
-                self.cells[dst].remove(enemy_chip)
-                enemy_chip.deleteLater()
-
-        # Перемещаем фишку
-        self.cells[src].remove(chip)
-        self.cells[dst].append(chip)
-        chip.move(triangles[dst][0], triangles[dst][1])
-
-        # Обновление кубиков
-        if abs(dst - src) == self.first_dice:
-            self.first_dice = -1000
-        else:
-            self.second_dice = -1000
-
-        self.update_dice_display()
+        self.mover(src, dst - src, chip)
 
     # проверка на то, выиграл ли игрок с цветом <color>
     def is_game_end(self, color):
@@ -820,7 +886,6 @@ class Game(QtWidgets.QWidget):
             self.clearer()
         print('Helps are cleared')
 
-
         cnt = 0
         for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
             cnt += len(self.cells[i])
@@ -918,7 +983,8 @@ class Game(QtWidgets.QWidget):
         else:
             a = self.cells[6:12]
         for i in range(0, pos % 6):
-            if len(a[i]) > 0 and ('reddd' if 'reddd' in but1.objectName() else 'white') in a[i][0].objectName():  # если есть фишка слева от позиции выбранной И ЭТА ФИШКА НЕ ВРАЖЕСКАЯ
+            if len(a[i]) > 0 and ('reddd' if 'reddd' in but1.objectName() else 'white') in a[i][
+                0].objectName():  # если есть фишка слева от позиции выбранной И ЭТА ФИШКА НЕ ВРАЖЕСКАЯ
                 return False
         return True
 
@@ -1080,12 +1146,12 @@ class ChooseDiceColor(QtWidgets.QWidget):
         wnd_menu.show()
         self.close()
 
-    # функция продолжения игры
+    # функция перехода к выбору сложности
     def oked(self):
-        global dice_color, wnd_of_playing
+        global dice_color, wnd_of_difficulty
         if dice_color != '':
-            wnd_of_playing = Game()
-            wnd_of_playing.show()
+            wnd_of_difficulty = SetDifficulty()
+            wnd_of_difficulty.show()
             self.close()
         else:
             error_of_dice_color(self)
