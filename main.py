@@ -902,6 +902,7 @@ class Game(QtWidgets.QWidget):
         else:
             return
 
+
     # смотрим нет ли фишек перед текущей(длф выбрасывания с дома)
     def nothing_before(self, pos, but1):
         if 'reddd' in but1.objectName():
