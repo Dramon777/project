@@ -784,6 +784,7 @@ class Game(QtWidgets.QWidget):
                 return False
         return True
 
+
     def make_move(self, f, s):
         print(10001, f, s)
         self.mover(f % 24, abs(f - s) % 24, self.cells[s % 24][0] if self.cells[s % 24] else None, True)
