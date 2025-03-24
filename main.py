@@ -1,13 +1,11 @@
+import asyncio
 import codecs
 import sys
-import weakref
 from random import randint
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QPushButton
-from numpy.f2py.auxfuncs import throw_error
-from numpy.matlib import empty
 
 game_sys_lang = 'Eng'
 game_mod = None
@@ -151,6 +149,16 @@ def error_of_game_mod(self1):
         wnd_error = Error('<b>Wrong game mod</b>')
     else:
         wnd_error = Error('<b>Ошибка игрового режима</b>')
+    self1.hide()
+    wnd_error.show()
+
+# функция отображения окна ошибка в связи с невыбранностью сложноти бота
+def error_of_difficulty(self1):
+    global wnd_error
+    if game_sys_lang == 'Eng':
+        wnd_error = Error('<b>Wrong bot difficulty</b>')
+    else:
+        wnd_error = Error('<b>Ошибка сложности игры</b>')
     self1.hide()
     wnd_error.show()
 
@@ -315,13 +323,13 @@ class SetDifficulty(QtWidgets.QWidget):
 
     # функция перехода в игру
     def oked(self):
-        global dice_color, wnd_of_playing
-        if dice_color != '':
+        global diff, wnd_of_playing
+        if diff is not None:
             wnd_of_playing = Game()
             wnd_of_playing.show()
             self.close()
         else:
-            error_of_dice_color(self)
+            error_of_difficulty(self)
 
     # функция возврата в меню
     def back_to_main_menu(self):
@@ -604,7 +612,7 @@ class Game(QtWidgets.QWidget):
         """
         Режим игры против бота.
         """
-        self.player_color_now = 'reddd'  # Игрок всегда красные
+        self.player_color_now = 'reddd'  # Игрок всегда красный
         self.bot_color = 'white'
 
         if game_sys_lang == 'Рус':
@@ -618,6 +626,13 @@ class Game(QtWidgets.QWidget):
                 wnd_win = GameEnd(self.player_color_now)
                 wnd_win.show()
 
+            for i in range(len(self.cells)):
+                for j in range(len(self.cells[i])):
+                    if '-1' in self.cells[i][j].objectName() or '-2' in self.cells[i][j].objectName():
+                       continue
+                    direction = -52 if i % 24 < 12 else 52
+                    self.cells[i][j].move(triangles[i][0], triangles[i][1] + direction * j)
+                    self.cells[i][j].show()
             if self.player_color_now == 'reddd':
                 # Ожидание броска кубиков
                 QtWidgets.QApplication.processEvents()  # Позволяем интерфейсу обновляться
@@ -673,10 +688,18 @@ class Game(QtWidgets.QWidget):
         print(16)
         if best_move:
             self.execute_bot_move(best_move)
+        best_move = self.get_best_move()
+        print(16)
+        if best_move:
+            self.execute_bot_move(best_move)
         print(17)
         self.bot_thinking = False
         self.change_player()
         self.throwed()
+        for i in self.cells:
+            if len(i):
+                i[0].show()
+        self.clearer()
         print(18)
 
     # реализация хода бота
@@ -686,7 +709,13 @@ class Game(QtWidgets.QWidget):
         """
         print(19)
         src, dst = move # текущая позиция фишки, целевая позиция фишки
-        self.mover(src, dst - src)
+        self.cells[src][0].click()
+        self.cells[src][0].click()
+        asyncio.sleep(1)
+        print(self.cells[dst][0].objectName(), src, dst, self.first_dice, self.second_dice)
+        print([(x[0].objectName() if x else '-') for x in self.cells])
+        self.cells[dst][0].click()
+        self.clearer()
         print(21)
 
     # функции для реализации модели дерево принятия решений
@@ -749,7 +778,7 @@ class Game(QtWidgets.QWidget):
                 max_eval = eval
                 best_move = move
         return best_move
-# ПЕРЕПИСАТЬ ТАК, ЧТОБЫ ЕСЛИ ПОСЛЕ ХОДА ФИШКОЙ, БУДЕТ ПДЛНАИРОВАТЬСЯ ЕЩЁ ОДИН ХОД С ЭТОЙ ПОЗИЦИИ, А ПОЗИЦИЯ ПУСТАЯ, ТО ВТОРОЙ ХОД НЕ ЗАСЧИТЫВАЛСЯ, КАК ВОЗМОЖНЫЙ
+
     def get_all_possible_moves(self, color):
         """
         Возвращает все возможные ходы для текущего игрока.
@@ -758,20 +787,13 @@ class Game(QtWidgets.QWidget):
         print(23, [(x[0].objectName() if x else '----') for x in self.cells])
         moves = []
         for src in range(23):
-            print(24)
             if not self.cells[src]: continue
-            print(25)
             if color not in self.cells[src][0].objectName(): continue
-            print(26)
             for dice in [self.first_dice, self.second_dice]:
-                print(27)
                 if dice == -1000: continue
                 dst = (src + dice) % 24
-                print(28)
-                if self.is_move_valid(src):
-                    print(29)
+                if self.is_move_valid(src, dice):
                     moves.append((src, dst))
-                    print(30)
         print(31, moves, self.first_dice, self.second_dice)
         return moves
 
@@ -784,25 +806,33 @@ class Game(QtWidgets.QWidget):
                 return False
         return True
 
-
     def make_move(self, f, s):
         print(10001, f, s)
-        self.mover(f % 24, abs(f - s) % 24, self.cells[s % 24][0] if self.cells[s % 24] else None, True)
+        self.mover(f % 24, min(abs(f - s), 24 - abs(f - s)), self.cells[s % 24][0] if self.cells[s % 24] else None, True)
+        self.clearer()
 
     def undo_move(self, f, s):
         print(10002, f, s)
-        self.mover(s % 24, -(abs(f - s) % 24), self.cells[f % 24][0] if self.cells[f % 24] else None, True)
-    def is_move_valid(self, fr):
-        print(100)
-        if len(self.cells[fr]):
-            if 'white' in self.cells[fr][0].objectName():
-                self.travel(self.cells[fr][0], True)
-                for i in self.cells:
-                    if i:
-                        if '-1' in i[0].objectName() or '-2' in i[0].objectName() or'white' in i[0].objectName():
-                            return True
-        return False
+        # возникает ошибка в undo_move с движение фишки обратно!!!!!!!!!!!!!
+        self.mover(s % 24, -min(abs(f - s), 24 - abs(f - s)), self.cells[f % 24][0] if self.cells[f % 24] else None, True)
+        self.clearer()
 
+    def is_move_valid(self, pos, dice):
+        print(100)
+        but1 = self.cells[pos][0]
+        target_pos = (pos + dice) % 24
+        if 'white' in but1.objectName() and target_pos % 24 > 11 and -1 < pos < 12:
+            return False
+
+        player_color, enemy_color = 'white', 'reddd'
+
+        if self.cells[target_pos % 24]:
+            if player_color in self.cells[target_pos % 24][0].objectName():
+                return True
+            else:
+                return False # вражеская фишка на позиции
+        else:
+            return True
     # функция выхода в меню
     def back(self):
         self.wnd_of_exit = Exit('game')
@@ -896,7 +926,6 @@ class Game(QtWidgets.QWidget):
         # Проверка, что фишка принадлежит текущему игроку
         player_color = 'reddd' if 'reddd' in but1.objectName() else 'white'
         if player_color != self.player_color_now:
-            print("Нельзя ходить вражеской фишкой!")
             return
 
         # Проверка на последнюю нажатую кнопку
@@ -904,14 +933,12 @@ class Game(QtWidgets.QWidget):
             self.num_of_last_pushed_but[:5] in but1.objectName()) or self.first_dice == 0:
             print('\n')
             return
-        print('This button is another than before')
 
         pos1 = self.on_desk(but1)
 
         # Удаление предыдущих подсказок, если они есть
         if self.num_of_last_pushed_but and not is_vs_bot:
             self.clearer()
-        print('Helps are cleared')
 
         cnt = 0
         for i in range(6, 12) if 'white' in but1.objectName() else range(18, 24):
@@ -945,12 +972,10 @@ class Game(QtWidgets.QWidget):
         if '-1' in move_button.objectName():
             if (('white' in but1.objectName() and target_pos % 24 > 11 and -1 < pos1 < 12) or
                     ('reddd' in but1.objectName() and target_pos > 23)):
-                print('The chip is out of range before move and can\'t throw\n')
                 move_button = None
                 return
 
             self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
-            print('The chip is NOT out of range after move')
 
             player_color, enemy_color = ('reddd', 'white') if 'reddd' in but1.objectName() else ('white', 'reddd')
 
@@ -958,20 +983,16 @@ class Game(QtWidgets.QWidget):
                 if player_color in self.cells[target_pos % 24][0].objectName():
                     direction = -52 if target_pos % 24 < 12 else 52
                     move_button.move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
-                    print("Enemy's chip NOT in the position")
                 else:
-                    print("Enemy's chip in the position\n")
                     move_button = None
                     return  # вражеская фишка на позиции
             else:
                 x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
-                move_button.move(x, y)
+                move_button.move(x, y + (-52 if target_pos % 24 < 12 else 52) * (len(self.cells[target_pos % 24]) - (1 if len(self.cells[target_pos % 24]) else 0)))
                 self.cells[target_pos % 24] = [move_button] + self.cells[target_pos % 24]
-                print('The position is empty')
             if not is_vs_bot:
                 move_button.show()
                 move_button.clicked.connect(lambda: self.mover(pos1, dice, move_button))
-            print('HELP WAS CREATED')
 
         elif self.can_throw_but1 is not None:
             cnt = sum(len(self.cells[i]) for i in (range(6, 12) if 'white' in but1.objectName() else range(18, 24)))
@@ -985,7 +1006,6 @@ class Game(QtWidgets.QWidget):
 
             if (self.fl_r and 'reddd' in but1.objectName()) or (self.fl_w and 'white' in but1.objectName()):
                 self.helper.clear()
-                print('Start throwing')
                 self.num_of_last_pushed_but = but1.objectName()[5:10] + but1.objectName()[-2:]
 
                 pos = 6 - (pos1 % 6)
@@ -1009,7 +1029,6 @@ class Game(QtWidgets.QWidget):
             move_button = None
             return
 
-
     # смотрим нет ли фишек перед текущей(длф выбрасывания с дома)
     def nothing_before(self, pos, but1):
         if 'reddd' in but1.objectName():
@@ -1022,43 +1041,57 @@ class Game(QtWidgets.QWidget):
                 return False
         return True
 
+    # ОН НЕ ВОЗВРАЩАЕТ НА МЕСТО НЕКОТОРЫЕ ВЗЯТЫЕ ФИШКИ ИЛИ ОНИ НЕ ПОКАЗЫВАЮТСЯ ПО КАКОЙ-ТО ПРИЧИНЕ
     # откуда, куда, место на доске куда пойдет
     # двигаем игровую фишку
     def mover(self, pos, dice, to_pos=None, aboba=False):
-        print('101--------------------')
-        print([(x[0].objectName() if x else 'None') for x in self.cells])
-        print('102--------------------')
-        print(101, [len(x) for x in self.cells])
-        target_pos = (pos + dice) % 24
-        print(f"Таргет поз: {target_pos}")
-        m = self.cells[pos][0]
-        self.cells[pos] = self.cells[pos][1:] if self.cells[pos] else []
-        print(102)
-        if self.cells[target_pos % 24]:
-            self.cells[target_pos % 24].pop(0) if ('-1' in self.cells[target_pos % 24][0].objectName() or '-2' in self.cells[target_pos % 24][0].objectName()) else print()
-            print(103)
-            self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
-            print(104)
+        if aboba:
+            print('101--------------------')
+            print([(x[0].objectName() if x else 'None') for x in self.cells])
+            print('102--------------------')
+            print(101, [len(x) for x in self.cells])
+            target_pos = (pos + dice) % 24
+            print(f"Таргет поз: {target_pos}, Поз сейчас: {pos}, Кубик: {dice}")
+            m = self.cells[pos][0]
+            self.cells[pos] = self.cells[pos][1:] if self.cells[pos] else []
+            print(102)
+            if self.cells[target_pos % 24]:
+                self.cells[target_pos % 24].pop(0) if ('-1' in self.cells[target_pos % 24][0].objectName() or '-2' in self.cells[target_pos % 24][0].objectName()) else print()
+                print(103)
+                self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
+                print(104)
+            else:
+                self.cells[target_pos % 24] = [m]
+            if to_pos is not None:
+                x, y = to_pos.x(), to_pos.y()
+                self.cells[target_pos % 24][0].move(x, y)
+            elif len(self.cells[target_pos % 24]) > 1:
+                x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
+                self.cells[target_pos % 24][0].move(x, y)
+                direction = -52 if target_pos % 24 < 12 else 52
+                self.cells[target_pos % 24][0].move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
+            elif len(self.cells[target_pos % 24]) == 1:
+                x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
+                self.cells[target_pos % 24][0].move(x, y)
+            print('The chip moved to position')
+            self.clearer()
+            print('Helps are cleared')
+            print('\n')
         else:
-            self.cells[target_pos % 24] = [m]
-        if to_pos is not None:
+            print(self.first_dice, self.second_dice, self.first_dice + pos, self.second_dice + pos)
+            target_pos = pos + dice
+            m = self.cells[pos][0]
+            del self.cells[pos][0]
+            self.cells[target_pos % 24] = [m] + self.cells[target_pos % 24]
             x, y = to_pos.x(), to_pos.y()
             self.cells[target_pos % 24][0].move(x, y)
-        elif len(self.cells[target_pos % 24]) > 1:
-            x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
-            self.cells[target_pos % 24][0].move(x, y)
-            direction = -52 if target_pos % 24 < 12 else 52
-            self.cells[target_pos % 24][0].move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
-        elif len(self.cells[target_pos % 24]) == 1:
-            x, y = triangles[target_pos % 24][0], triangles[target_pos % 24][1]
-            self.cells[target_pos % 24][0].move(x, y)
-        print('The chip moved to position')
-        self.clearer()
-        print('Helps are cleared')
-        print('\n')
-        # удаляем поочерёдно кубики, которыми ходим
-        # если выпали одинаковые кубики
-        if not aboba:
+            self.cells[target_pos % 24][0].show()
+            print('The chip moved to position')
+            self.clearer()
+            print('Helps are cleared')
+            print('\n')
+            # удаляем поочерёдно кубики, которыми ходим
+            # если выпали одинаковые кубики
             if self.first_dice == self.second_dice and self.lbl_dice3 is not None:
                 if self.lbl_dice4 is not None:
                     self.lbl_dice4.clear()
