@@ -19,6 +19,20 @@ wnd_win = None
 wnd_of_difficulty = None
 diff = None
 dice_color = ''
+
+# Цветовая схема
+COLORS = {
+    'background': QColor(240, 240, 245),
+    'button': QColor(70, 130, 180),  # SteelBlue
+    'button_hover': QColor(65, 105, 225),  # RoyalBlue
+    'button_pressed': QColor(30, 144, 255),  # DodgerBlue
+    'text': QColor(50, 50, 50),
+    'text_light': QColor(255, 255, 255),
+    'error': QColor(220, 80, 80),
+    'success': QColor(85, 170, 85),
+    'panel': QColor(230, 230, 235)
+}
+
 dices_colors = {
     'white': {
         1: "dices/1_w.png",
@@ -130,17 +144,44 @@ def set_args(self, w, h):
                         QtCore.Qt.WindowStaysOnTopHint)
     self.setFixedSize(w, h)
     centering(self)
-    QtWidgets.QApplication.setStyle("Fusion")
+
+    # Установка цветовой палитры
     palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(240, 240, 255))
-    palette.setColor(QPalette.WindowText, QColor(50, 50, 50))
-    palette.setColor(QPalette.Button, QColor(180, 200, 255))
-    palette.setColor(QPalette.ButtonText, QColor(0, 0, 0))
-    palette.setColor(QPalette.Base, QColor(230, 230, 255))
-    palette.setColor(QPalette.AlternateBase, QColor(255, 250, 250))
-    QtWidgets.QApplication.setPalette(palette)
+    palette.setColor(QPalette.Window, COLORS['background'])
+    palette.setColor(QPalette.WindowText, COLORS['text'])
+    palette.setColor(QPalette.Button, COLORS['button'])
+    palette.setColor(QPalette.ButtonText, COLORS['text_light'])
+    palette.setColor(QPalette.Base, QColor(255, 255, 255))
+    palette.setColor(QPalette.AlternateBase, QColor(240, 240, 240))
+    self.setPalette(palette)
 
-
+    # Базовый стиль для кнопок
+    self.setStyleSheet(f"""
+        QPushButton {{
+            background-color: {COLORS['button'].name()};
+            color: {COLORS['text_light'].name()};
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 18px;
+            min-width: 80px;
+        }}
+        QPushButton:hover {{
+            background-color: {COLORS['button_hover'].name()};
+        }}
+        QPushButton:pressed {{
+            background-color: {COLORS['button_pressed'].name()};
+        }}
+        QLabel {{
+            color: {COLORS['text'].name()};
+            font-size: 18px;
+        }}
+        QRadioButton {{
+            color: {COLORS['text'].name()};
+            font-size: 18px;
+            spacing: 8px;
+        }}
+    """)
 # функция отображения окна ошибка в связи с невыбранностью режима игры
 
 def error_of_game_mod(self1):
@@ -199,25 +240,25 @@ class Error(QtWidgets.QWidget):
         self.setupUI()
 
     def setupUI(self):
-        set_args(self, 400, 110)
+        set_args(self, 400, 150)
         self.setObjectName("error")
-        self.lbl = QLabel(self)
 
-        # вывод ошибки
+        # Установка стиля для окна ошибки
+        self.setStyleSheet(f"""
+             QLabel {{
+                 font-size: 18px;
+                 color: {COLORS['error'].name()};
+             }}
+         """)
 
-        if game_sys_lang == 'Eng':
-            self.lbl.setText(f'<b>Error: {self.wrong}!</b>')
-        else:
-            self.lbl.setText(f'<b>Ошибка: {self.wrong}!</b>')
-        self.lbl.setStyleSheet("font-size: 18px;")
-        self.lbl.move(5, 10)
+        # Сообщение об ошибке
+        self.lbl = QLabel(f'{self.wrong}!', self)
+        self.lbl.setGeometry(50, 30, 300, 40)
+        self.lbl.setAlignment(QtCore.Qt.AlignCenter)
 
-        # кнопка "ок", для обозначения, что пользовватель ознакоммился с ошибкой
-
-        self.ok_button = QtWidgets.QPushButton("ОК", self)
-        self.ok_button.setGeometry(QtCore.QRect(90, 50, 220, 55))
-        self.ok_button.setStyleSheet("font-size: 16px;")
-
+        # Кнопка OK
+        self.ok_button = QPushButton("OK", self)
+        self.ok_button.setGeometry(150, 80, 100, 40)
         self.ok_button.clicked.connect(self.back)
 
     # функция закрытия окна и открытия меню
@@ -237,21 +278,27 @@ class GameEnd(QtWidgets.QWidget):
 
     def setupUI(self):
         wnd_of_playing.hide()
-        set_args(self, 300, 100)
+        set_args(self, 400, 200)
 
-        self.txt_lbl = QLabel(self)
-        if game_sys_lang == 'Рус':
-            self.txt_lbl.setText(f"{'Белые' if self.winner == 'white' else 'Красные'} одержали победу!!!")
-            self.back_menu = QPushButton('Вернуться в меню', self)
-        else:
-            self.txt_lbl.setText(f"{'White' if self.winner == 'white' else 'Red'} won!!!")
-            self.back_menu = QPushButton('Back to menu', self)
+        # Установка стиля для окна победы
+        self.setStyleSheet(f"""
+            QLabel {{
+                font-size: 24px;
+                font-weight: bold;
+                color: {COLORS['text'].name()};
+            }}
+        """)
 
-        self.txt_lbl.setStyleSheet('font-size: 20px;')
-        self.txt_lbl.move(20 if game_sys_lang == 'Рус' else 95, 10)
+        # Сообщение о победе
+        winner_text = f"<b>{'White' if self.winner == 'white' else 'Red'} won!!!</b>" if game_sys_lang == 'Eng' else f"<b>{'Белые' if self.winner == 'white' else 'Красные'} одержали победу!!!</b>"
+        self.txt_lbl = QLabel(winner_text, self)
+        self.txt_lbl.setGeometry(50, 40, 300, 50)
+        self.txt_lbl.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.back_menu.setStyleSheet('font-size: 20px;')
-        self.back_menu.move(85 if game_sys_lang == 'Eng' else 65, 50)
+        # Кнопка возврата в меню
+        btn_text = 'Back to menu' if game_sys_lang == 'Eng' else 'Вернуться в меню'
+        self.back_menu = QPushButton(btn_text, self)
+        self.back_menu.setGeometry(100, 110, 200, 50)
         self.back_menu.clicked.connect(self.back)
 
     def back(self):
@@ -275,51 +322,39 @@ class SetDifficulty(QtWidgets.QWidget):
         self.setupUI()
     def setupUI(self):
 
-        # настройка окна
-        set_args(self, 315, 250)
-        self.lbl = QLabel(self)
+        set_args(self, 350, 250)
+        self.setObjectName("choosing_difficulty")
 
-        # настройка языка окна в соответствии с языком игры
-        if game_sys_lang == 'Рус':
-            self.easy_diff = QtWidgets.QRadioButton('Легкая', self)
-            self.medium_diff = QtWidgets.QRadioButton('Средняя', self)
-            self.hard_diff = QtWidgets.QRadioButton('Сложная', self)
-            self.lbl.setText('Выберите сложность:')
-            self.back_menu = QPushButton('Вернуться в меню', self)
-        else:
-            self.easy_diff = QtWidgets.QRadioButton('Easy', self)
-            self.medium_diff = QtWidgets.QRadioButton('Medium', self)
-            self.hard_diff = QtWidgets.QRadioButton('Hard', self)
-            self.lbl.setText('Choose difficulty:')
-            self.back_menu = QPushButton('Back menu', self)
+        # Заголовок
+        title = '<b>Choose difficulty:</b>' if game_sys_lang == 'Eng' else '<b>Выберите сложность:</b>'
+        self.lbl = QLabel(title, self)
+        self.lbl.setGeometry(70, 10, 210, 30)
+        self.lbl.setAlignment(QtCore.Qt.AlignCenter)
 
-        # установка размеров шрифта
-        self.easy_diff.setStyleSheet("font-size: 18px;")
-        self.medium_diff.setStyleSheet("font-size: 18px;")
-        self.hard_diff.setStyleSheet("font-size: 18px;")
-        self.lbl.setStyleSheet("font-size: 18px")
+        # Радиокнопки выбора сложности
+        self.easy_diff = QtWidgets.QRadioButton('Easy' if game_sys_lang == 'Eng' else 'Легкая', self)
+        self.medium_diff = QtWidgets.QRadioButton('Medium' if game_sys_lang == 'Eng' else 'Средняя', self)
+        self.hard_diff = QtWidgets.QRadioButton('Hard' if game_sys_lang == 'Eng' else 'Сложная', self)
 
+        self.easy_diff.setGeometry(30, 50, 120, 40)
+        self.medium_diff.setGeometry(30, 100, 120, 40)
+        self.hard_diff.setGeometry(30, 150, 120, 40)
 
-        # двигаем все элементы интерфейса
-        self.lbl.move(70, 5)
-        self.easy_diff.setGeometry(QtCore.QRect(15, 45, 120, 45))
-        self.medium_diff.setGeometry(QtCore.QRect(15, 90, 120, 45))
-        self.hard_diff.setGeometry(QtCore.QRect(15, 135, 120, 45))
+        # Кнопки управления
+        self.ok = QPushButton('OK', self)
+        self.ok.setGeometry(30, 200, 100, 40)
+        self.ok.clicked.connect(self.oked)
 
-        # настройка кнопок выбора сложности
+        btn_text = 'Back to menu' if game_sys_lang == 'Eng' else 'Вернуться в меню'
+        self.back_menu = QPushButton(btn_text, self)
+        self.back_menu.setGeometry(150, 200, 170, 40)
+        self.back_menu.clicked.connect(self.back_to_main_menu)
+
+        # Подключение событий
         self.easy_diff.clicked.connect(self.set_easy)
         self.medium_diff.clicked.connect(self.set_medium)
         self.hard_diff.clicked.connect(self.set_hard)
 
-        # настройка кнопки возврата в меню
-        self.back_menu.setStyleSheet("font-size: 18px;")
-        self.back_menu.setGeometry(QtCore.QRect(130, 190, 160, 45))
-        self.back_menu.clicked.connect(self.back_to_main_menu)
-
-        # настройка кнопки продолжения(перехода в игру)
-        self.ok = QPushButton('OK', self)
-        self.ok.setGeometry(QtCore.QRect(15, 190, 100, 45))
-        self.ok.clicked.connect(self.oked)
 
     # функция перехода в игру
     def oked(self):
@@ -418,60 +453,86 @@ class Game(QtWidgets.QWidget):
     def setupUI(self):
         set_args(self, 1700, 873)
 
-        # игровое поле
+        # Дополнительные стили для игрового окна
+        self.setStyleSheet(f"""
+            QLabel#moving_player {{
+                font-size: 20px;
+                font-weight: bold;
+                color: {COLORS['text'].name()};
+                background-color: {COLORS['panel'].name()};
+                border-radius: 5px;
+                padding: 5px;
+            }}
+        """)
+
+        # Игровое поле
         self.bg_lbl = QLabel(self)
         self.bg_pixmap = QPixmap("Game_desk.png")
         self.bg_lbl.setPixmap(self.bg_pixmap)
         self.bg_lbl.move(0, 0)
 
-        self.moving_player = QLabel(self)
-        self.moving_player.setStyleSheet("font-size: 20px;")
-        self.moving_player.setGeometry(1445, 600, 260, 30)
+        # Панель управления
+        control_panel = QtWidgets.QWidget(self)
+        control_panel.setGeometry(1440, 0, 260, 873)
+        control_panel.setStyleSheet(f"background-color: {COLORS['panel'].name()};")
 
+        # Текущий игрок
+        self.moving_player = QLabel(control_panel)
+        self.moving_player.setObjectName("moving_player")
+        self.moving_player.setGeometry(1, 600, 260, 30)
+        self.moving_player.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Кнопки управления
         if game_sys_lang == 'Рус':
-            # текст, уведомляющий игрока(-ов) о том, чтобы бросить кубики
-            self.moving_player.setText('Бросьте кубики')
-
-            # кнопка броска кубиков
-            self.button_throw_dice = QtWidgets.QPushButton("Кинуть кубики", self)
-
-            # кнопка выхода из игры в главное меню
-            self.button_back = QtWidgets.QPushButton("Выход", self)
-
+            self.button_throw_dice = QtWidgets.QPushButton("Бросить кубики", control_panel)
+            self.button_back = QtWidgets.QPushButton("Выход", control_panel)
+            self.but_play = QtWidgets.QPushButton("Начать игру", control_panel)
         else:
-            # текст, уведомляющий игрока(-ов) о том, чтобы бросить кубики
-            self.moving_player.setText('Throw the dice')
+            self.button_throw_dice = QtWidgets.QPushButton("Throw Dice", control_panel)
+            self.button_back = QtWidgets.QPushButton("Exit", control_panel)
+            self.but_play = QtWidgets.QPushButton("Start Game", control_panel)
 
-            # кнопка броска кубиков
-            self.button_throw_dice = QtWidgets.QPushButton("Throw the dice", self)
+        # Позиционирование и стилизация кнопок
+        buttons = [
+            (self.but_play, 1, 654, 258, 73),
+            (self.button_throw_dice, 1, 727, 258, 73),
+            (self.button_back, 1, 800, 258, 73)
+        ]
 
-            # кнопка выхода из игры в главное меню
-            self.button_back = QtWidgets.QPushButton("Leave", self)
+        for btn, x, y, w, h in buttons:
+            btn.setGeometry(x, y, w, h)
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS['button'].name()};
+                    color: {COLORS['text_light'].name()};
+                    font-size: 18px;
+                    border-radius: 5px;
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS['button_hover'].name()};
+                }}
+                QPushButton:pressed {{
+                    background-color: {COLORS['button_pressed'].name()};
+                }}
+            """)
 
-        # настройка кнопки выхода в меню из игры
-
-        self.button_back.setGeometry(QtCore.QRect(1441, 800, 258, 73))
-        self.button_back.setStyleSheet("font-size: 24px;")
+        # Подключение событий
         self.button_back.clicked.connect(self.back)
-
-        # настройка кнопки бросания кубиков
-
-        self.button_throw_dice.setGeometry(QtCore.QRect(1441, 727, 258, 73))
-        self.button_throw_dice.setStyleSheet("font-size: 24px;")
-
         self.button_throw_dice.clicked.connect(self.throwed)
+        self.but_play.clicked.connect(self.play)
 
+        # Инициализация игровых элементов
         self.but_size = QPixmap('red_chip.png').size()
         self.cells = []
         self.helper = [[], []]
 
-        # начальная генерация фишек
+        # Создание фишек
         for i in range(1, 16):
-            # создание и отображение красных фишек
+            # Красные фишки
             chip1 = self.create_chip('r', i)
             chip1.move(195, 787 - (52 * i) + 52)
 
-            # создание и отображение белых фишек
+            # Белые фишки
             chip2 = self.create_chip('w', i)
             chip2.move(1200, (52 * i) - 17)
 
@@ -481,22 +542,12 @@ class Game(QtWidgets.QWidget):
             self.helper[0].insert(0, chip1)
             self.helper[1].insert(0, chip2)
 
-        # внутренняя реализация игрового поля вида:
-        # <красные фишки> <треугольник> <треугольник> ... <треугольник> <белые фишки>
-        # (20 треугольников, в каждом из которых по 1 кнопке, на которую можно будет нажимать для ходов, 1 треугольник под белые фишки, 1 треугольник под красные фишки)
-
+        # Настройка игрового поля
         self.cells.append(self.helper[0])
         self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
         self.cells.append(self.helper[1])
         self.cells = self.cells + [[], [], [], [], [], [], [], [], [], [], []]
-
-        # отчистка вспомогательного списка
         self.helper.clear()
-
-        self.but_play = QtWidgets.QPushButton('PLAY GAME' if game_sys_lang == 'Eng' else 'Начать игру', self)
-        self.but_play.setStyleSheet("font-size: 35px;")
-        self.but_play.setGeometry(QtCore.QRect(1441, 654, 258, 73))
-        self.but_play.clicked.connect(self.play)
 
     def play(self):
         self.but_play.hide()
@@ -982,7 +1033,7 @@ class Game(QtWidgets.QWidget):
             if self.cells[target_pos % 24]:
                 if player_color in self.cells[target_pos % 24][0].objectName():
                     direction = -52 if target_pos % 24 < 12 else 52
-                    move_button.move(self.cells[target_pos % 24][0].x(), self.cells[target_pos % 24][0].y() + direction)
+                    move_button.move(triangles[target_pos % 24][0], triangles[target_pos % 24][1] + direction * len(self.cells[target_pos]))
                 else:
                     move_button = None
                     return  # вражеская фишка на позиции
@@ -1172,73 +1223,39 @@ class ChooseDiceColor(QtWidgets.QWidget):
         self.setupUI()
 
     def setupUI(self):
+        set_args(self, 350, 250)
         self.setObjectName("choosing_dice_color")
-        set_args(self, 315, 250)
-        self.lbl = QLabel(self)
 
-        if game_sys_lang == 'Eng':
+        # Заголовок
+        title = '<b>Choose dice color</b>' if game_sys_lang == 'Eng' else '<b>Выберите цвет кубиков</b>'
+        self.lbl = QLabel(title, self)
+        self.lbl.setGeometry(40, 10, 270, 30)
+        self.lbl.setAlignment(QtCore.Qt.AlignCenter)
 
-            # надпись выбрать цвет кубиков
-            self.lbl.setText("<b>Choose dice color</b>")
-            self.lbl.move(70, 5)
+        # Радиокнопки выбора цвета
+        self.white = QtWidgets.QRadioButton("White" if game_sys_lang == 'Eng' else "Белые", self)
+        self.black = QtWidgets.QRadioButton("Black" if game_sys_lang == 'Eng' else "Чёрные", self)
+        self.both = QtWidgets.QRadioButton("1 Black and 1 White" if game_sys_lang == 'Eng' else "1 Белый и 1 Чёрный",
+                                           self)
 
-            # кнопка выбрать белые кубики
-            self.white = QtWidgets.QRadioButton("White", self)
+        self.white.setGeometry(30, 50, 120, 40)
+        self.black.setGeometry(30, 100, 120, 40)
+        self.both.setGeometry(30, 150, 290, 40)
 
-            # кнопка выбрать чёрные кубики
-            self.black = QtWidgets.QRadioButton("Black", self)
+        # Кнопки управления
+        self.ok = QtWidgets.QPushButton("OK", self)
+        self.ok.setGeometry(30, 200, 100, 40)
+        self.ok.clicked.connect(self.oked)
 
-            # кнопка выбрать оба цвета для кубиков(1 белый, 1 черный)
-            self.both = QtWidgets.QRadioButton("1 Black and 1 White", self)
-
-            # кнопка возврата в меню
-            self.back_menu = QtWidgets.QPushButton("Back to menu", self)
-
-        else:
-
-            # надпись выбрать цвет кубиков
-            self.lbl.setText("<b>Выберите цвет кубиков</b>")
-            self.lbl.move(40, 5)
-
-            # кнопка выбрать белые кубики
-            self.white = QtWidgets.QRadioButton("Белые", self)
-
-            # кнопка выбрать чёрные кубики
-            self.black = QtWidgets.QRadioButton("Чёрные", self)
-
-            # кнопка выбрать оба цвета для кубиков(1 белый, 1 черный)
-            self.both = QtWidgets.QRadioButton("1 Белый и 1 Чёрный", self)
-
-            # кнопка возврата в меню
-            self.back_menu = QtWidgets.QPushButton("Вернуться в меню", self)
-
-        self.lbl.setStyleSheet("font-size: 18px;")
-
-        # настройка кнопки выбора белого цвета
-        self.white.setStyleSheet("font-size: 18px;")
-        self.white.setGeometry(QtCore.QRect(15, 45, 120, 45))
-        self.white.clicked.connect(chose_color_white)
-
-        # настройка кнопки выбора чёрного цвета
-        self.black.setStyleSheet("font-size: 18px;")
-        self.black.setGeometry(QtCore.QRect(15, 90, 120, 45))
-        self.black.clicked.connect(chose_color_black)
-
-        # настройка кнопки выбора обоих цветов
-        self.both.setStyleSheet("font-size: 18px;")
-        self.both.setGeometry(QtCore.QRect(15, 135, 280, 45))
-        self.both.clicked.connect(chose_color_both)
-
-        # настройка кнопки возврата в меню
-        self.back_menu.setStyleSheet("font-size: 18px;")
-        self.back_menu.setGeometry(QtCore.QRect(130, 190, 160, 45))
+        btn_text = "Back to menu" if game_sys_lang == 'Eng' else "Вернуться в меню"
+        self.back_menu = QtWidgets.QPushButton(btn_text, self)
+        self.back_menu.setGeometry(150, 200, 170, 40)
         self.back_menu.clicked.connect(self.back_to_main_menu)
 
-        # настройка кнопки ОК
-        self.ok = QtWidgets.QPushButton("ОК", self)
-        self.ok.setStyleSheet("font-size: 18px;")
-        self.ok.setGeometry(QtCore.QRect(15, 190, 100, 45))
-        self.ok.clicked.connect(self.oked)
+        # Подключение событий
+        self.white.clicked.connect(chose_color_white)
+        self.black.clicked.connect(chose_color_black)
+        self.both.clicked.connect(chose_color_both)
 
     # функция возврата в меню
     def back_to_main_menu(self):
@@ -1277,68 +1294,36 @@ class ChooseGameMode(QtWidgets.QWidget):
         self.setupUI()
 
     def setupUI(self):
-        self.setObjectName("choosing_game_mod")
         set_args(self, 290, 150)
-        self.lbl = QLabel(self)
+        self.setObjectName("choosing_game_mod")
 
-        if game_sys_lang == 'Eng':
+        # Заголовок
+        title = '<b>Choose your opponent</b>' if game_sys_lang == 'Eng' else '<b>Выберите соперника</b>'
+        self.lbl = QLabel(title, self)
+        self.lbl.setGeometry(10, 5, 300, 30)
+        self.lbl.setAlignment(QtCore.Qt.AlignCenter)
 
-            # надпись выбрать режим игры
-            self.lbl.setText("<b>Choose your enemy</b>")
-            self.lbl.move(60, 5)
+        # Радиокнопки выбора режима
+        self.game_mod_1vs1 = QtWidgets.QRadioButton("Person" if game_sys_lang == 'Eng' else "Человек", self)
+        self.game_mod_versus_bot = QtWidgets.QRadioButton("Computer" if game_sys_lang == 'Eng' else "Компьютер", self)
 
-            # кнопка Играть 1 на 1
-            self.game_mod_1vs1 = QtWidgets.QRadioButton("Person", self)
+        self.game_mod_1vs1.setGeometry(30, 40, 100, 45)
+        self.game_mod_versus_bot.setGeometry(150, 40, 130, 45)
 
-            # кнопка Играть с ботом
-            self.game_mod_versus_bot = QtWidgets.QRadioButton("Computer", self)
-
-            # кнопка Играть
-            self.play = QtWidgets.QPushButton("Play", self)
-
-            # кнопка возврата в меню
-            self.ret = QtWidgets.QPushButton("Back", self)
-
-        else:
-
-            # надпись выбрать режим игры
-            self.lbl.setText("<b>Выберите вашего соперника</b>")
-            self.lbl.move(8, 5)
-
-            # кнопка Играть 1 на 1
-            self.game_mod_1vs1 = QtWidgets.QRadioButton("Человек", self)
-
-            # кнопка Играть с ботом
-            self.game_mod_versus_bot = QtWidgets.QRadioButton("Компьютер", self)
-
-            # кнопка Играть
-            self.play = QtWidgets.QPushButton("Играть", self)
-
-            # кнопка возврата в меню
-            self.ret = QtWidgets.QPushButton("Назад", self)
-
-        self.lbl.setStyleSheet("font-size: 18px;")
-
-        self.game_mod_1vs1.setStyleSheet("font-size: 18px;")
-        self.game_mod_1vs1.setGeometry(QtCore.QRect(30, 40, 100, 45))
-        self.game_mod_1vs1.setObjectName("game_mod_1vs1")
-        self.game_mod_1vs1.clicked.connect(one_vs_one)
-
-        self.game_mod_versus_bot.setStyleSheet("font-size: 18px;")
-        self.game_mod_versus_bot.setGeometry(QtCore.QRect(150, 40, 130, 45))
-        self.game_mod_versus_bot.setObjectName("game_mod_you_vs_bot")
-        self.game_mod_versus_bot.clicked.connect(vsBot)
-
-        self.play.setStyleSheet("font-size: 18px;")
-        self.play.setGeometry(QtCore.QRect(25, 90, 100, 45))
-        self.play.setObjectName("game_mod_you_vs_bot")
+        # Кнопки управления
+        btn_text = "Play" if game_sys_lang == 'Eng' else "Играть"
+        self.play = QtWidgets.QPushButton(btn_text, self)
+        self.play.setGeometry(25, 90, 100, 45)
         self.play.clicked.connect(self.playing)
 
-        self.ret.setStyleSheet("font-size: 18px;")
-        self.ret.setGeometry(QtCore.QRect(155, 90, 100, 45))
-        self.ret.setObjectName("return to main menu")
-
+        btn_text = "Back" if game_sys_lang == 'Eng' else "Назад"
+        self.ret = QtWidgets.QPushButton(btn_text, self)
+        self.ret.setGeometry(155, 90, 100, 45)
         self.ret.clicked.connect(self.back)
+
+        # Подключение событий
+        self.game_mod_1vs1.clicked.connect(one_vs_one)
+        self.game_mod_versus_bot.clicked.connect(vsBot)
 
     # функция закрытия окна и открытия меню
 
@@ -1399,12 +1384,12 @@ class Exit(QtWidgets.QWidget):
 
         self.lbl.setStyleSheet("font-size: 14px;")
 
-        self.yes.setGeometry(QtCore.QRect(30, 40, 75, 45))
+        self.yes.setGeometry(QtCore.QRect(15, 40, 75, 45))
         self.yes.setStyleSheet("font-size: 18px;")
         self.yes.setObjectName("yes_exit_button")
         self.yes.clicked.connect(self.exite)
 
-        self.no.setGeometry(QtCore.QRect(146, 40, 75, 45))
+        self.no.setGeometry(QtCore.QRect(131, 40, 75, 45))
         self.no.setStyleSheet("font-size: 18px;")
         self.no.setObjectName("no_exit_button")
         self.no.clicked.connect(self.back)
@@ -1448,33 +1433,23 @@ class Rules(QtWidgets.QWidget):
         global text_rules
         set_args(self, 800, 600)
 
-        # язык кнопки + язык правил игры
-
+        # Загрузка правил
         if game_sys_lang == 'Рус':
-            file = codecs.open('RULES_ru.txt', 'r', 'utf_8')
-            text_rules = file.read()
-            file.close()
-            self.but_back = QtWidgets.QPushButton('Назад', self)
+            with codecs.open('RULES_ru.txt', 'r', 'utf_8') as file:
+                text_rules = file.read()
         else:
-            file = codecs.open('RULES_eng.txt', 'r', 'utf_8')
-            text_rules = file.read()
-            file.close()
-            self.but_back = QtWidgets.QPushButton('Back', self)
+            with codecs.open('RULES_eng.txt', 'r', 'utf_8') as file:
+                text_rules = file.read()
 
-        # виджет с правилами
+        # Текст правил
+        self.lbl = QLabel(text_rules, self)
+        self.lbl.setGeometry(10, 10, 780, 500)
+        self.lbl.setWordWrap(True)
 
-        self.lbl = QLabel(self)
-        self.lbl.setText(text_rules)
-        self.lbl.setStyleSheet("font-size: 16px;")
-
-        # кнопка возврата в главное меню
-
-        self.but_back.setGeometry(QtCore.QRect(5, 505, 790, 40))
-        self.but_back.setStyleSheet(
-            """
-            "background-color: rgb(240, 240, 255)"
-            """
-        )
+        # Кнопка возврата
+        btn_text = 'Back' if game_sys_lang == 'Eng' else 'Назад'
+        self.but_back = QtWidgets.QPushButton(btn_text, self)
+        self.but_back.setGeometry(300, 520, 200, 50)
         self.but_back.clicked.connect(self.back)
 
         # скроллбар + скролл колесом мыши
@@ -1529,75 +1504,47 @@ class Menu(QtWidgets.QWidget):
 
     def setupUi(self):
         set_args(self, 500, 550)
-        self.setObjectName("menu")
-        self.lbl1 = QLabel(self)
-        self.lbl2 = QLabel(self)
 
-        if game_sys_lang == 'Eng':
+        # Заголовок
+        title = '<b>Long Backgammon</b>' if game_sys_lang == 'Eng' else '<b>Длинные нарды</b>'
+        self.lbl1 = QLabel(title, self)
+        self.lbl1.setGeometry(50, 20, 400, 80)
+        self.lbl1.setStyleSheet("font-size: 36px; color: #4a6fa5;")
+        self.lbl1.setAlignment(QtCore.Qt.AlignCenter)
 
-            # надпись названия игры
-            self.lbl1.setText('<b>Long backgammon</b>')
+        # Кнопки меню
+        buttons = [
+            ('Play' if game_sys_lang == 'Eng' else 'Играть', 100, 120, 300, 80, self.play_game),
+            ('Rules' if game_sys_lang == 'Eng' else 'Правила', 100, 220, 300, 80, open_rules),
+            ('Exit' if game_sys_lang == 'Eng' else 'Выход', 100, 320, 300, 80, self.exiting),
+            ('Eng' if game_sys_lang == 'Eng' else 'Рус', 100, 420, 300, 80, self.lang)
+        ]
 
-            # надпись автор
-            self.lbl2.setText('<b>Author: Makarov Artem(dram00nn_nn)</b>')
+        for text, x, y, w, h, handler in buttons:
+            btn = QtWidgets.QPushButton(text, self)
+            btn.setGeometry(x, y, w, h)
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLORS['button'].name()};
+                    color: {COLORS['text_light'].name()};
+                    font-size: 20px;
+                    border-radius: 5px;
+                }}
+                QPushButton:hover {{
+                    background-color: {COLORS['button_hover'].name()};
+                }}
+                QPushButton:pressed {{
+                    background-color: {COLORS['button_pressed'].name()};
+                }}
+            """)
+            btn.clicked.connect(handler)
 
-            # кнопка смены языка(изначальный язык игры - английский)
-            self.change_lang = QtWidgets.QPushButton('Eng', self)
-
-            # кнопка exit
-            self.exit_button = QtWidgets.QPushButton("Exit", self)
-
-            # кнопка правила игры
-            self.rules_button = QtWidgets.QPushButton("Rules", self)
-
-            # кнопка играть
-            self.playing_button = QtWidgets.QPushButton("Play", self)
-
-        else:
-
-            # надпись названия игры
-            self.lbl1.setText('<b>Длинные нарды</b>')
-
-            # надпись автор
-            self.lbl2.setText('<b>Автор: Макаров Артём(dram00nn_nn)</b>')
-
-            # кнопка смены языка(изначальный язык игры - английский)
-            self.change_lang = QtWidgets.QPushButton('Рус', self)
-
-            # кнопка exit
-            self.exit_button = QtWidgets.QPushButton("Выход", self)
-
-            # кнопка правила игры
-            self.rules_button = QtWidgets.QPushButton("Правила", self)
-
-            # кнопка играть
-            self.playing_button = QtWidgets.QPushButton("Играть", self)
-
-        self.lbl1.setGeometry(75, 5, 500, 90)
-        self.lbl1.setStyleSheet("font-size: 40px;")
-
-        self.lbl2.setGeometry(120, 520, 400, 25)
-
-        self.change_lang.setGeometry(QtCore.QRect(100, 470, 300, 50))
-        self.change_lang.setObjectName("change_language")
-        self.change_lang.setStyleSheet("font-size: 20px;")
-        self.change_lang.clicked.connect(self.lang)
-
-        self.exit_button.setGeometry(QtCore.QRect(100, 350, 300, 100))
-        self.exit_button.setObjectName("exit_button")
-        self.exit_button.setStyleSheet("font-size: 20px;")
-        self.exit_button.clicked.connect(self.exiting)
-
-        self.rules_button.setGeometry(QtCore.QRect(100, 225, 300, 100))
-        self.rules_button.setObjectName("rules_button")
-        self.rules_button.setStyleSheet("font-size: 20px;")
-        self.rules_button.clicked.connect(open_rules)
-
-        self.playing_button.setGeometry(QtCore.QRect(100, 100, 300, 100))
-        self.playing_button.setObjectName("playing_button")
-        self.playing_button.setStyleSheet("font-size: 20px;")
-        self.playing_button.clicked.connect(self.play_game)
-
+        # Информация об авторе
+        author = '<b>Author: Makarov Artem (dram00nn_nn)</b>' if game_sys_lang == 'Eng' else '<b>Автор: Макаров Артём (dram00nn_nn)</b>'
+        self.lbl2 = QLabel(author, self)
+        self.lbl2.setGeometry(50, 520, 400, 25)
+        self.lbl2.setStyleSheet("font-size: 14px; color: #666;")
+        self.lbl2.setAlignment(QtCore.Qt.AlignCenter)
     # отображение окошка exit
 
     def exiting(self):
@@ -1625,6 +1572,14 @@ class Menu(QtWidgets.QWidget):
 if __name__ == '__main__':
     game_sys_lang = 'Eng'
     app = QtWidgets.QApplication(sys.argv)
+    # Установка глобального стиля
+    app.setStyleSheet(f"""
+        QWidget {{
+            background-color: {COLORS['background'].name()};
+            color: {COLORS['text'].name()};
+            font-family: 'Segoe UI';
+        }}
+    """)
     wnd_menu = Menu()
     wnd_menu.show()
 
