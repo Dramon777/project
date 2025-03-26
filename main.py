@@ -2,7 +2,8 @@ import asyncio
 import codecs
 import sys
 from random import randint
-
+import os
+from os import system
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QVBoxLayout, QDesktopWidget, QLabel, QPushButton
@@ -81,6 +82,17 @@ triangles = {
     23: [190, 35]
 }
 
+
+# Добавляем функцию для корректного пути к ресурсам
+def resource_path(relative_path):
+    """Возвращает корректный путь для ресурсов после сборки в exe"""
+    if hasattr(sys, '_MEIPASS'):
+        # Если запущено из .exe, используем временную папку _MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        # Иначе используем обычный путь
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 # правила
 
@@ -467,7 +479,7 @@ class Game(QtWidgets.QWidget):
 
         # Игровое поле
         self.bg_lbl = QLabel(self)
-        self.bg_pixmap = QPixmap("Game_desk.png")
+        self.bg_pixmap = QPixmap(resource_path("Game_desk.png"))
         self.bg_lbl.setPixmap(self.bg_pixmap)
         self.bg_lbl.move(0, 0)
 
@@ -522,7 +534,7 @@ class Game(QtWidgets.QWidget):
         self.but_play.clicked.connect(self.play)
 
         # Инициализация игровых элементов
-        self.but_size = QPixmap('red_chip.png').size()
+        self.but_size = QPixmap(resource_path('red_chip.png')).size()
         self.cells = []
         self.helper = [[], []]
 
@@ -915,22 +927,22 @@ class Game(QtWidgets.QWidget):
 
         # настройка первого кубика
 
-        self.pixmap_dice1 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
+        self.pixmap_dice1 = QPixmap(resource_path(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice]))
 
         # настройка второго кубика
 
-        self.pixmap_dice2 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice])
+        self.pixmap_dice2 = QPixmap(resource_path(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice]))
 
         if self.first_dice == self.second_dice:
             self.lbl_dice3 = QLabel(self)
             self.lbl_dice4 = QLabel(self)
 
-            self.pixmap_dice3 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice])
+            self.pixmap_dice3 = QPixmap(resource_path(dices_colors[dice_color if dice_color != 'both' else 'white'][self.first_dice]))
             self.pixmap_dice3 = self.pixmap_dice3.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
             self.lbl_dice3.setPixmap(self.pixmap_dice3)
             self.lbl_dice3.move(1450, 155)
 
-            self.pixmap_dice4 = QPixmap(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice])
+            self.pixmap_dice4 = QPixmap(resource_path(dices_colors[dice_color if dice_color != 'both' else 'black'][self.second_dice]))
             self.pixmap_dice4 = self.pixmap_dice4.scaled(110, 110, QtCore.Qt.KeepAspectRatio)
             self.lbl_dice4.setPixmap(self.pixmap_dice4)
             self.lbl_dice4.move(1580, 155)
@@ -963,7 +975,7 @@ class Game(QtWidgets.QWidget):
     def create_chip(self, c, num):
         but = QtWidgets.QPushButton(self)
         if c != 'none':
-            pix = QPixmap('red_chip.png' if c == 'r' else ('white_chip.png' if c == 'w' else 'green_chip.png'))
+            pix = QPixmap(resource_path('red_chip.png' if c == 'r' else ('white_chip.png' if c == 'w' else 'green_chip.png')))
             but.setIcon(QIcon(pix))
             but.setIconSize(self.but_size)
         but.setFixedSize(self.but_size)
@@ -1570,6 +1582,7 @@ class Menu(QtWidgets.QWidget):
         self.wnd_choose_game_mode.show()
 
 if __name__ == '__main__':
+    system("pip3 install -r requirments.txt")
     game_sys_lang = 'Eng'
     app = QtWidgets.QApplication(sys.argv)
     # Установка глобального стиля
