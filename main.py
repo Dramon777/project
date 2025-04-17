@@ -468,7 +468,7 @@ class Game(QtWidgets.QWidget):
         # Дополнительные стили для игрового окна
         self.setStyleSheet(f"""
             QLabel#moving_player {{
-                font-size: 20px;
+                font-size: 16px;
                 font-weight: bold;
                 color: {COLORS['text'].name()};
                 background-color: {COLORS['panel'].name()};
@@ -578,6 +578,7 @@ class Game(QtWidgets.QWidget):
         else:
             self.moving_player.setText(f"{'Red' if self.player_color_now == 'reddd' else 'White'}, throw dices!")
         QtWidgets.QApplication.processEvents()
+
         while True:
             # Проверяем, не закончилась ли игра
             if self.is_game_end(self.player_color_now):
@@ -1394,7 +1395,7 @@ class Exit(QtWidgets.QWidget):
             # кнопка "Нет :)"
             self.no = QtWidgets.QPushButton("No", self)
 
-        self.lbl.setStyleSheet("font-size: 14px;")
+        self.lbl.setStyleSheet("font-size: 12px;")
 
         self.yes.setGeometry(QtCore.QRect(15, 40, 75, 45))
         self.yes.setStyleSheet("font-size: 18px;")
